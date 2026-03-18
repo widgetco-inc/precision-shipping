@@ -1,0 +1,44 @@
+import { AppSettings } from '../types';
+
+export const defaultSettings: AppSettings = {
+  carriers: {
+    fedex: {
+      enabled: true,
+      services: [
+        { code: 'FEDEX_GROUND', label: 'FedEx Ground', enabled: true, domesticOnly: true },
+        { code: 'GROUND_HOME_DELIVERY', label: 'FedEx Home Delivery', enabled: true, domesticOnly: true },
+        { code: 'FEDEX_2_DAY', label: 'FedEx 2Day', enabled: true, domesticOnly: true },
+        { code: 'PRIORITY_OVERNIGHT', label: 'FedEx Priority Overnight', enabled: true, domesticOnly: true },
+        { code: 'STANDARD_OVERNIGHT', label: 'FedEx Standard Overnight', enabled: true, domesticOnly: true },
+        { code: 'INTERNATIONAL_GROUND_CA', label: 'FedEx International Ground (Canada)', enabled: true, canadaOnly: true },
+        { code: 'INTERNATIONAL_PRIORITY', label: 'FedEx International Priority Express', enabled: true, internationalOnly: true },
+        { code: 'INTERNATIONAL_ECONOMY', label: 'FedEx International Economy Express', enabled: true, internationalOnly: true },
+        { code: 'INTERNATIONAL_CONNECT_PLUS', label: 'FedEx International Connect Plus', enabled: true, internationalOnly: true }
+      ]
+    },
+    usps: {
+      enabled: true,
+      services: [
+        { code: 'GROUND_ADVANTAGE', label: 'USPS Ground Advantage', enabled: true, domesticOnly: true, maxWeightLb: 1 },
+        { code: 'PRIORITY_MAIL', label: 'USPS Priority Mail', enabled: true, domesticOnly: true },
+        { code: 'INTERNATIONAL_MAIL', label: 'USPS International Mail', enabled: true, internationalOnly: true, maxWeightLb: 4 }
+      ]
+    },
+    ups: {
+      enabled: true,
+      services: [
+        { code: 'GROUND', label: 'UPS Ground', enabled: true, domesticOnly: true },
+        { code: 'SECOND_DAY_AIR', label: 'UPS 2-day', enabled: true, domesticOnly: true, maxWeightLb: 20 },
+        { code: 'GROUND_SAVER', label: 'UPS Ground Saver', enabled: true, domesticOnly: true }
+      ]
+    }
+  },
+  packaging: {
+    defaultPackageTareLb: 0.15,
+    expressEnvelopeMaxWeightLb: 2,
+    useFedexEnvelopeForExpress: true
+  },
+  access: {
+    allowedAdminEmails: ['jg@widgetco.com', 'lgerkey@widgetco.com']
+  }
+};
