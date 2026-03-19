@@ -7,9 +7,13 @@ export interface ServiceRule {
   domesticOnly?: boolean;
   internationalOnly?: boolean;
   canadaOnly?: boolean;
+  hiAkOnly?: boolean;
+  excludeHiAk?: boolean;
   maxWeightLb?: number;
   minWeightLb?: number;
   handlingFeeUsd?: number;
+  flatRateUsd?: number;
+  freeThresholdUsd?: number;
 }
 
 export interface CarrierSettings {
@@ -38,6 +42,7 @@ export interface Destination {
   provinceCode?: string;
   postalCode?: string;
   city?: string;
+  address1?: string;
 }
 
 export interface CartLineInput {
@@ -62,6 +67,7 @@ export interface Shipment {
   isDomestic: boolean;
   isCanada: boolean;
   isInternational: boolean;
+  isHiAkTerritory: boolean;
   eligibleForFedexEnvelope: boolean;
 }
 

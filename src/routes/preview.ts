@@ -10,18 +10,19 @@ const router = Router();
 
 const previewSchema = z.object({
   destination: z.object({
-    countryCode: z.string().min(2),
+    countryCode:  z.string().min(2),
     provinceCode: z.string().optional(),
-    postalCode: z.string().optional(),
-    city: z.string().optional()
+    postalCode:   z.string().optional(),
+    city:         z.string().optional(),
+    address1:     z.string().optional(),
   }),
   lines: z.array(z.object({
-    variantId: z.string().optional(),
-    sku: z.string().optional(),
-    title: z.string().optional(),
-    quantity: z.number().int().positive(),
-    trueWeightGrams: z.number().positive().optional()
-  })).min(1)
+    variantId:        z.string().optional(),
+    sku:              z.string().optional(),
+    title:            z.string().optional(),
+    quantity:         z.number().int().positive(),
+    trueWeightGrams:  z.number().positive().optional(),
+  })).min(1),
 });
 
 router.post('/api/preview', requireApprovedAdmin, async (req, res) => {
@@ -31,9 +32,9 @@ router.post('/api/preview', requireApprovedAdmin, async (req, res) => {
     return;
   }
 
-  const shipment = buildShipment(parsed.data.lines, parsed.data.destination);
+  const shipment = await buildShipment(parsed.data.lines, parsed.data.destination);
   const adapters = [new FedexAdapter(), new UpsAdapter(), new UspsAdapter()];
-  const results = await Promise.all(adapters.map((adapter) => adapter.getRates(shipment)));
+  const results = await Promise.all(adapters.map((a) => a.getRates(shipment)));
   const rates = results.flat().sort((a, b) => a.amountUsd - b.amountUsd);
 
   res.json({ shipment, rates });
