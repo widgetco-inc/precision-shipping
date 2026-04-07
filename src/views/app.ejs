@@ -18,6 +18,7 @@
           <a href="#methods">Shipping methods</a>
           <a href="#rules">Rules</a>
           <a href="#preview">Preview</a>
+          <a href="#weights">Weights</a>
           <a href="#access">Access</a>
         </nav>
       </aside>
@@ -44,7 +45,7 @@
           <article class="card">
             <p class="eyebrow">Rate engine</p>
             <h3>How weight is calculated</h3>
-            <p>True unit weight × quantity + package tare, then services are filtered by your carrier rules.</p>
+            <p>True unit weight &times; quantity + package tare, then services are filtered by your carrier rules.</p>
           </article>
         </section>
 
@@ -53,20 +54,20 @@
           <h3>Enabled services</h3>
           <div class="carrier-groups">
             <% Object.entries(settings.carriers).forEach(([carrier, config]) => { %>
-              <div class="carrier-box">
-                <div class="carrier-head">
-                  <h4><%= carrier.toUpperCase() %></h4>
-                  <span class="pill <%= config.enabled ? 'on' : 'off' %>"><%= config.enabled ? 'Enabled' : 'Disabled' %></span>
-                </div>
-                <ul>
-                  <% config.services.forEach((service) => { %>
-                    <li>
-                      <span><%= service.label %></span>
-                      <span class="pill <%= service.enabled ? 'on' : 'off' %>"><%= service.enabled ? 'ON' : 'OFF' %></span>
-                    </li>
-                  <% }) %>
-                </ul>
+            <div class="carrier-box">
+              <div class="carrier-head">
+                <h4><%= carrier.toUpperCase() %></h4>
+                <span class="pill <%= config.enabled ? 'on' : 'off' %>"><%= config.enabled ? 'Enabled' : 'Disabled' %></span>
               </div>
+              <ul>
+                <% config.services.forEach((service) => { %>
+                <li>
+                  <span><%= service.label %></span>
+                  <span class="pill <%= service.enabled ? 'on' : 'off' %>"><%= service.enabled ? 'ON' : 'OFF' %></span>
+                </li>
+                <% }) %>
+              </ul>
+            </div>
             <% }) %>
           </div>
         </section>
@@ -93,6 +94,10 @@
                 <input name="countryCode" value="US" />
               </label>
               <label>
+                <span>Postal code</span>
+                <input name="postalCode" value="10001" />
+              </label>
+              <label>
                 <span>Quantity</span>
                 <input name="quantity" type="number" value="25000" min="1" />
               </label>
@@ -106,12 +111,37 @@
           <pre id="previewOutput" class="output">Preview results will appear here.</pre>
         </section>
 
+        <section class="card" id="weights">
+          <p class="eyebrow">Weights</p>
+          <h3>Variant true-weight sync</h3>
+          <p class="muted">Scan every Shopify product variant and flag any whose <code>custom.true_weight_grams</code> metafield is missing or mismatched against the catalog weight.</p>
+          <div class="weights-toolbar">
+            <button class="button" id="syncWeightsBtn" type="button">Run sync</button>
+            <span id="syncStatus" class="muted"></span>
+          </div>
+          <div id="syncWarnings"></div>
+          <table id="weightsTable" class="weights-table" style="display:none">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Variant</th>
+                <th>SKU</th>
+                <th>Shopify (g)</th>
+                <th>True weight (g)</th>
+                <th>Status</th>
+                <th>Edit</th>
+              </tr>
+            </thead>
+            <tbody id="weightsTableBody"></tbody>
+          </table>
+        </section>
+
         <section class="card" id="access">
           <p class="eyebrow">Access</p>
           <h3>Approved admins</h3>
           <ul>
             <% settings.access.allowedAdminEmails.forEach((email) => { %>
-              <li><%= email %></li>
+            <li><%= email %></li>
             <% }) %>
           </ul>
         </section>
@@ -123,7 +153,10 @@
         event.preventDefault();
         const form = new FormData(event.target);
         const payload = {
-          destination: { countryCode: String(form.get('countryCode') || 'US') },
+          destination: {
+            countryCode: String(form.get('countryCode') || 'US'),
+            postalCode: String(form.get('postalCode') || '')
+          },
           lines: [{ quantity: Number(form.get('quantity') || 1), trueWeightGrams: Number(form.get('trueWeightGrams') || 0.1) }]
         };
 
@@ -139,6 +172,104 @@
         const data = await response.json();
         document.getElementById('previewOutput').textContent = JSON.stringify(data, null, 2);
       });
+
+      // ── Weights sync ──────────────────────────────────────────────────────
+      async function loadSyncStatus() {
+        const res = await fetch('/api/weights/sync-status');
+        if (!res.ok) return;
+        const data = await res.json();
+        renderWeightsResult(data.result);
+        if (data.inProgress) {
+          document.getElementById('syncStatus').textContent = 'Sync in progress…';
+          setTimeout(loadSyncStatus, 2000);
+        }
+      }
+
+      function renderWeightsResult(result) {
+        if (!result) return;
+        const warnings = result.warnings || [];
+        const records = result.records || [];
+
+        const statusEl = document.getElementById('syncStatus');
+        statusEl.textContent = `Last sync: ${records.length} variants scanned, ${warnings.length} warning(s)`;
+
+        const warnDiv = document.getElementById('syncWarnings');
+        if (warnings.length > 0) {
+          warnDiv.innerHTML = '<ul class="warnings">' +
+            warnings.map(w =>
+              `<li class="warning-${w.status}"><strong>${w.productTitle} — ${w.variantTitle}</strong> (${w.sku}): ${w.status === 'missing' ? 'true weight metafield not set' : `metafield ${w.metafieldGrams}g vs catalog ${w.shopifyCatalogGrams}g`}</li>`
+            ).join('') + '</ul>';
+        } else {
+          warnDiv.innerHTML = '';
+        }
+
+        if (records.length > 0) {
+          const tbody = document.getElementById('weightsTableBody');
+          tbody.innerHTML = records.map(r => `
+            <tr data-variant-id="${r.variantId}" class="status-${r.status}">
+              <td>${r.productTitle}</td>
+              <td>${r.variantTitle}</td>
+              <td>${r.sku}</td>
+              <td>${r.shopifyCatalogGrams}</td>
+              <td class="weight-cell">
+                <span class="weight-display">${r.metafieldGrams !== null ? r.metafieldGrams : '—'}</span>
+                <input class="weight-input" type="number" step="0.0001" min="0.0001" value="${r.metafieldGrams || ''}" style="display:none" />
+              </td>
+              <td><span class="pill ${r.status === 'ok' ? 'on' : 'off'}">${r.status.toUpperCase()}</span></td>
+              <td>
+                <button class="btn-edit" type="button" onclick="startEditWeight(this)">Edit</button>
+                <button class="btn-save" type="button" onclick="saveWeight(this)" style="display:none">Save</button>
+              </td>
+            </tr>
+          `).join('');
+          document.getElementById('weightsTable').style.display = '';
+        }
+      }
+
+      function startEditWeight(btn) {
+        const row = btn.closest('tr');
+        row.querySelector('.weight-display').style.display = 'none';
+        row.querySelector('.weight-input').style.display = '';
+        row.querySelector('.btn-edit').style.display = 'none';
+        row.querySelector('.btn-save').style.display = '';
+      }
+
+      async function saveWeight(btn) {
+        const row = btn.closest('tr');
+        const variantId = row.dataset.variantId;
+        const input = row.querySelector('.weight-input');
+        const grams = parseFloat(input.value);
+        if (!grams || grams <= 0) { alert('Enter a valid weight in grams.'); return; }
+
+        const res = await fetch(`/api/weights/${variantId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trueWeightGrams: grams })
+        });
+        if (!res.ok) { alert('Save failed.'); return; }
+
+        row.querySelector('.weight-display').textContent = grams;
+        row.querySelector('.weight-display').style.display = '';
+        input.style.display = 'none';
+        row.querySelector('.btn-edit').style.display = '';
+        btn.style.display = 'none';
+      }
+
+      document.getElementById('syncWeightsBtn').addEventListener('click', async () => {
+        const statusEl = document.getElementById('syncStatus');
+        statusEl.textContent = 'Starting sync…';
+        document.getElementById('syncWeightsBtn').disabled = true;
+        const res = await fetch('/api/weights/sync', { method: 'POST' });
+        if (!res.ok) { statusEl.textContent = 'Sync failed.'; document.getElementById('syncWeightsBtn').disabled = false; return; }
+        statusEl.textContent = 'Sync running…';
+        setTimeout(() => {
+          document.getElementById('syncWeightsBtn').disabled = false;
+          loadSyncStatus();
+        }, 1500);
+      });
+
+      // Load sync status on page load
+      loadSyncStatus();
     </script>
   </body>
 </html>
