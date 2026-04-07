@@ -11,12 +11,30 @@ import carrierRoutes from './routes/carrier';
 import adminRoutes from './routes/admin';
 
 const app = express();
+const START_TIME = Date.now();
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Security headers — keep CSP off so EJS views load inline scripts
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors());
+
+// CORS: only allow requests from the WidgetCo apps origin.
+// This prevents any other app on apps.widgetco.com from accidentally
+// calling our carrier-rate endpoints and sharing runtime state.
+app.use(cors({
+  origin: (origin, cb) => {
+    // Allow same-origin (no Origin header) and the known dashboard host
+    const allowed = [
+      'https://apps.widgetco.com',
+      'https://widgetco.com',
+    ];
+    if (!origin || allowed.includes(origin)) return cb(null, true);
+    cb(new Error(`CORS blocked: ${origin}`));
+  },
+  credentials: true,
+}));
+
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -29,8 +47,15 @@ app.use(session({
   cookie: { secure: false, maxAge: 8 * 60 * 60 * 1000 },
 }));
 
+// Health check — exposes uptime and version for monitoring / alerting.
+// Hit GET /health to confirm the process is alive before routing real traffic.
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'widgetco-shipping-app' });
+  res.json({
+    ok: true,
+    service: 'widgetco-shipping-app',
+    uptimeSeconds: Math.floor((Date.now() - START_TIME) / 1000),
+    node: process.version,
+  });
 });
 
 // Login / logout / robots.txt (public)
@@ -43,6 +68,20 @@ app.use(carrierRoutes);
 app.use(adminRoutes);
 
 app.get('/', (_req, res) => res.redirect('/app'));
+
+// ── Isolation safety net ─────────────────────────────────────────────────────
+// Log unhandled promise rejections instead of silently swallowing them.
+// This keeps the process alive while still surfacing the error so it can be
+// investigated without an unexpected crash dropping live checkout traffic.
+process.on('unhandledRejection', (reason) => {
+  console.error('[shipping-app] Unhandled rejection:', reason);
+});
+
+// Same for unexpected thrown errors — log and stay up.
+process.on('uncaughtException', (err) => {
+  console.error('[shipping-app] Uncaught exception:', err);
+});
+// ─────────────────────────────────────────────────────────────────────────────
 
 app.listen(env.port, () => {
   console.log(`WidgetCo shipping app listening on port ${env.port}`);
