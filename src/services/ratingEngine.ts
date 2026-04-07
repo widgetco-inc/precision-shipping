@@ -1,5 +1,5 @@
 import { getSettings } from './settingsStore';
-import { resolveTrueWeightGrams } from './catalog';
+import { resolveWeightsBatch } from './catalog';
 import { CartLineInput, Destination, Shipment, ShipmentLine } from '../types';
 
 const GRAMS_PER_LB = 453.59237;
@@ -10,16 +10,25 @@ export async function buildShipment(
 ): Promise<Shipment> {
   const settings = getSettings();
 
-  const shipmentLines: ShipmentLine[] = await Promise.all(
-    lines.map(async (line) => {
-      const resolvedWeightGrams = await resolveTrueWeightGrams(
-        line.variantId,
-        line.sku,
-        line.trueWeightGrams
-      );
-      return { ...line, resolvedWeightGrams };
-    })
-  );
+  // Collect all unique variant IDs and batch-fetch their weights in one API call
+  const variantIds = lines
+    .map((l) => l.variantId)
+    .filter((id): id is string => Boolean(id));
+
+  const weightMap = await resolveWeightsBatch(variantIds);
+
+  const shipmentLines: ShipmentLine[] = lines.map((line) => {
+    // If caller provided a direct weight, use it; otherwise use batched result
+    let resolvedWeightGrams: number;
+    if (typeof line.trueWeightGrams === 'number' && line.trueWeightGrams > 0) {
+      resolvedWeightGrams = line.trueWeightGrams;
+    } else if (line.variantId) {
+      resolvedWeightGrams = weightMap.get(line.variantId) ?? 0;
+    } else {
+      resolvedWeightGrams = 0;
+    }
+    return { ...line, resolvedWeightGrams };
+  });
 
   const totalItemWeightGrams = shipmentLines.reduce(
     (sum, line) => sum + line.resolvedWeightGrams * line.quantity,
