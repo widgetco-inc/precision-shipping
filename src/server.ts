@@ -10,7 +10,6 @@ import previewRoutes from './routes/preview';
 import carrierRoutes from './routes/carrier';
 import adminRoutes from './routes/admin';
 import weightsRoutes from './routes/weights';
-import shippingCopRoutes, { startShippingCopScheduler } from './routes/shippingCop';
 
 const app = express();
 const START_TIME = Date.now();
@@ -71,7 +70,6 @@ app.use(previewRoutes);
 app.use(carrierRoutes);
 app.use(adminRoutes);
 app.use(weightsRoutes);
-app.use(shippingCopRoutes);
 
 app.get('/', (_req, res) => res.redirect('/app'));
 
@@ -89,7 +87,6 @@ process.on('uncaughtException', (err) => {
 });
 // ─────────────────────────────────────────────────────────────────────────────
 
-startShippingCopScheduler(app);
 app.listen(env.port, () => {
   console.log(`WidgetCo shipping app listening on port ${env.port}`);
 });
