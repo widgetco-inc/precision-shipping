@@ -11,23 +11,34 @@ router.post('/carrier-service/rates', async (req, res) => {
     const rateReq = req.body?.rate;
     const items = Array.isArray(rateReq?.items) ? rateReq.items : [];
 
-    const lines = items.map((item: any) => ({
-      variantId: String(item.variant_id ?? ''),
-      sku: item.sku ? String(item.sku) : undefined,
-      title: item.product_title ? String(item.product_title) : undefined,
-      quantity: Number(item.quantity ?? 1),
-      trueWeightGrams: undefined,
-    }));
+    const lines = items.map((item: any) => {
+      // variant_id arrives as a plain integer from Shopify's carrier callback.
+      // Convert to string so catalog.ts can build the GID correctly.
+      const rawVariantId = item.variant_id;
+      const variantId = rawVariantId != null ? String(rawVariantId) : '';
+
+      return {
+        variantId,
+        sku: item.sku ? String(item.sku) : undefined,
+        title: item.product_title ? String(item.product_title) : undefined,
+        quantity: Number(item.quantity ?? 1),
+        // item.grams is Shopify's rounded integer weight.
+        // We do NOT trust it for calculation - catalog.ts will fetch the true value.
+        // We pass it as shopifyRoundedGrams for logging/debugging only.
+        shopifyRoundedGrams: item.grams != null ? Number(item.grams) : undefined,
+        trueWeightGrams: undefined,
+      };
+    });
 
     const destination = {
-      countryCode:  String(rateReq?.destination?.country ?? 'US'),
+      countryCode: String(rateReq?.destination?.country ?? 'US'),
       provinceCode: rateReq?.destination?.province
         ? String(rateReq.destination.province) : undefined,
-      postalCode:   rateReq?.destination?.postal_code
+      postalCode: rateReq?.destination?.postal_code
         ? String(rateReq.destination.postal_code) : undefined,
-      city:         rateReq?.destination?.city
+      city: rateReq?.destination?.city
         ? String(rateReq.destination.city) : undefined,
-      address1:     rateReq?.destination?.address1
+      address1: rateReq?.destination?.address1
         ? String(rateReq.destination.address1) : undefined,
     };
 
@@ -39,11 +50,11 @@ router.post('/carrier-service/rates', async (req, res) => {
 
     res.json({
       rates: quotes.map((q) => ({
-        service_name:  q.serviceName,
-        service_code:  `${q.carrier}:${q.serviceCode}`,
-        total_price:   Math.round(q.amountUsd * 100).toString(),
-        currency:      q.currency,
-        description:   `True weight: ${shipment.totalShipmentWeightLb.toFixed(3)} lb`,
+        service_name: q.serviceName,
+        service_code: `${q.carrier}:${q.serviceCode}`,
+        total_price: Math.round(q.amountUsd * 100).toString(),
+        currency: q.currency,
+        description: `True weight: ${shipment.totalShipmentWeightLb.toFixed(3)} lb`,
       })),
     });
   } catch (err) {
