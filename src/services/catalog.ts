@@ -13,7 +13,7 @@ interface VariantNode {
 interface VariantResponse {
   data: {
     productVariant: VariantNode | null;
-  };
+  }
 }
 
 // In-process cache: variantId -> grams. Cleared every 5 minutes.
