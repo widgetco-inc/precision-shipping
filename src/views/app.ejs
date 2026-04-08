@@ -83,31 +83,31 @@
       </ul>
     </section>
 
-    <section class="card" id="preview">
+    <section class="card sh-card" id="preview">
       <p class="eyebrow">Preview</p>
       <h2>Test a shipment</h2>
-      <form id="previewForm" class="preview-form">
+      <form id="pForm" class="preview-form">
         <div class="grid three">
           <label>
             <span>Country</span>
-            <input name="countryCode" value="" />
+            <input name="cc" value="US" />
           </label>
           <label>
             <span>Postal code</span>
-            <input name="postalCode" value="10001" />
+            <input name="zip" value="10001" />
           </label>
           <label>
             <span>Quantity</span>
-            <input name="quantity" type="number" value="25000" min="1" />
+            <input name="qty" type="number" value="25000" min="1" />
           </label>
           <label>
             <span>True weight (grams)</span>
-            <input name="trueWeightGrams" type="number" step="0.0001" value="0.1" min="0.0001" />
+            <input name="wg" type="number" step="0.0001" value="0.1" min="0.0001" />
           </label>
         </div>
         <button class="button" type="submit">Run preview</button>
       </form>
-      <pre id="previewOutput" class="output">Preview results will appear here.</pre>
+      <pre id="pOut" class="output">Preview results will appear here.</pre>
     </section>
 
     <!-- ── Weights ──────────────────────────────────────────────────────── -->
@@ -174,26 +174,6 @@
 </main>
 
 <script>
-// ── Preview form ──────────────────────────────────────────────────────────────
-document.getElementById('previewForm').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const form = new FormData(event.target);
-  const payload = {
-    destination: {
-      countryCode: String(form.get('countryCode')),
-      postalCode: String(form.get('postalCode')),
-    },
-    lines: [{ quantity: Number(form.get('quantity')), trueWeightGrams: Number(form.get('trueWeightGrams') || 0.1) }],
-  };
-  const response = await fetch('/api/preview', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-admin-email': '<%= admin.email %>' },
-    body: JSON.stringify(payload),
-  });
-  const data = await response.json();
-  document.getElementById('previewOutput').textContent = JSON.stringify(data, null, 2);
-});
-
 // ── Nightly alert banner ──────────────────────────────────────────────────────
 async function loadNightlyAlerts() {
   const res = await fetch('/api/weights/alerts');
@@ -378,5 +358,6 @@ document.getElementById('csvUploadBtn').addEventListener('click', async () => {
 loadSyncStatus();
 loadNightlyAlerts();
 </script>
+<script src="/shipping-preview.js"></script>
 </body>
 </html>
