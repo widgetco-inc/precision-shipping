@@ -1,15 +1,15 @@
-// ── Precision Shipping — Preview Page ───────────────────────────────────────────────────
+// ââ Precision Shipping â Preview Page âââââââââââââââââââââââââââââââââââââââââââââââââââ
 // 1. Original single-line preview form (existing behaviour)
-// 2. SKU Cart Estimator – add multiple SKUs + quantities,
+// 2. SKU Cart Estimator â add multiple SKUs + quantities,
 //    auto-resolves true weights, calls the preview API, shows
 //    a formatted breakdown of shipment weights + carrier rates.
 
-/* ─── 1. ORIGINAL FORM ─── */
+/* âââ 1. ORIGINAL FORM âââ */
 document.getElementById('pForm').addEventListener('submit', async function (e) {
   e.preventDefault();
   const f   = new FormData(e.target);
   const out = document.getElementById('pOut');
-  out.textContent = 'Loading…';
+  out.textContent = 'Loadingâ¦';
   try {
     const r = await fetch('/shipping/api/preview', {
       method: 'POST',
@@ -25,7 +25,7 @@ document.getElementById('pForm').addEventListener('submit', async function (e) {
   }
 });
 
-/* ─── 2. SKU CART ESTIMATOR ─── */
+/* âââ 2. SKU CART ESTIMATOR âââ */
 (async function initSkuEstimator() {
   /* Load SKU weights */
   const skuWeights = {}, skuList = [];
@@ -148,15 +148,15 @@ document.getElementById('pForm').addEventListener('submit', async function (e) {
         <div class="sku-autocomplete"></div>
       </div></td>
       <td><input type="number" class="sku-qty-input" value="${qtyVal}" min="1" step="1"/></td>
-      <td><span class="sku-weight-badge${found ? ' found' : ''}">${found ? w + ' g/unit' : skuVal ? 'Not found' : '—'}</span></td>
-      <td><button class="sku-remove-btn" title="Remove">✕</button></td>`;
+      <td><span class="sku-weight-badge${found ? ' found' : ''}">${found ? w + ' g/unit' : skuVal ? 'Not found' : 'â'}</span></td>
+      <td><button class="sku-remove-btn" title="Remove">â</button></td>`;
     document.getElementById('skuCartBody').appendChild(tr);
     const inp = tr.querySelector('.sku-input'), dd = tr.querySelector('.sku-autocomplete');
     const badge = tr.querySelector('.sku-weight-badge');
     inp.addEventListener('input', () => {
       showAC(inp, dd);
       const s = inp.value.toUpperCase().trim(), wt = skuWeights[s];
-      if (!s)            { inp.className = 'sku-input'; badge.textContent = '—'; badge.className = 'sku-weight-badge'; }
+      if (!s)            { inp.className = 'sku-input'; badge.textContent = 'â'; badge.className = 'sku-weight-badge'; }
       else if (wt !== undefined) { inp.className = 'sku-input sku-found'; badge.textContent = wt + ' g/unit'; badge.className = 'sku-weight-badge found'; }
       else               { inp.className = 'sku-input sku-not-found'; badge.textContent = 'Not found'; badge.className = 'sku-weight-badge'; }
       updateTotals();
@@ -187,7 +187,7 @@ document.getElementById('pForm').addEventListener('submit', async function (e) {
     if (!lines.length) { pOut.textContent = 'No valid SKUs in cart.'; return; }
     const cc  = document.querySelector('[name="cc"]')?.value  || 'US';
     const zip = document.querySelector('[name="zip"]')?.value || '';
-    btn.disabled = true; btn.textContent = 'Running…'; pOut.textContent = 'Calculating…';
+    btn.disabled = true; btn.textContent = 'Runningâ¦'; pOut.textContent = 'Calculatingâ¦';
     try {
       const data = await fetch('/shipping/api/preview', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -196,19 +196,19 @@ document.getElementById('pForm').addEventListener('submit', async function (e) {
       let out = '';
       if (data.shipment) {
         const s = data.shipment;
-        out += `── Shipment Summary ─────────────────────────────────────────────────\n`;
+        out += `ââ Shipment Summary âââââââââââââââââââââââââââââââââââââââââââââââââ\n`;
         out += `  Total lines:     ${lines.length}\n`;
         out += `  Total qty:       ${lines.reduce((a, l) => a + l.quantity, 0).toLocaleString()}\n`;
         out += `  Net weight:      ${s.totalNetWeightLb?.toFixed(4)} lb\n`;
         out += `  Shipment weight: ${s.totalShipmentWeightLb?.toFixed(4)} lb (incl. tare: ${s.tareLb} lb)\n\n`;
-        out += `── Line Details ───────────────────────────────────────────────────\n`;
+        out += `ââ Line Details âââââââââââââââââââââââââââââââââââââââââââââââââââ\n`;
         (s.lines || []).forEach((line, i) => {
           const label = getRows()[i]?.querySelector('.sku-input').value || `Line ${i + 1}`;
-          out += `  ${label}: qty=${line.quantity}, ${line.trueWeightGrams}g/unit → ${line.resolvedWeightLb?.toFixed(4)} lb\n`;
+          out += `  ${label}: qty=${line.quantity}, ${line.trueWeightGrams}g/unit â ${line.resolvedWeightLb?.toFixed(4)} lb\n`;
         });
       }
       if (data.rates?.length) {
-        out += `\n── Carrier Rates ─────────────────────────────────────────────────\n`;
+        out += `\nââ Carrier Rates âââââââââââââââââââââââââââââââââââââââââââââââââ\n`;
         data.rates.forEach(r => { out += `  ${r.carrier.toUpperCase().padEnd(8)} ${r.serviceName.padEnd(30)} $${r.amountUsd?.toFixed(2)} ${r.currency}\n`; });
       }
       pOut.textContent = out;
