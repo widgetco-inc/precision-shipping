@@ -51,8 +51,8 @@
     </section>
 
     <section class="card" id="methods">
-      <p class="eyebrow">Shipping methods</p>
-      <h2>Enabled services</h2>
+      <details open>
+      <summary><p class="eyebrow">Shipping methods</p><h2>Enabled services</h2></summary>
       <div class="carrier-groups">
         <% Object.entries(settings.carriers).forEach(([carrier, config]) => { %>
           <div class="carrier-box">
@@ -69,6 +69,7 @@
           </div>
         <% }) %>
       </div>
+      </details>
     </section>
 
     <section class="card" id="rules">
@@ -112,8 +113,8 @@
 
     <!-- ── Weights ──────────────────────────────────────────────────────── -->
     <section class="card" id="weights">
-      <p class="eyebrow">Weights</p>
-      <h2>Variant true-weight sync</h2>
+      <details open>
+      <summary><p class="eyebrow">Weights</p><h2>Variant true-weight sync</h2></summary>
       <p class="muted">Scan every Shopify product variant and flag any whose <code>custom.actual_weight_grams</code> metafield is missing or differs &gt;20% from the Shopify catalog weight.</p>
 
       <!-- Nightly alert banner -->
@@ -159,6 +160,7 @@
         </thead>
         <tbody id="weightsTableBody"></tbody>
       </table>
+      </details>
     </section>
 
     <section class="card" id="access">
