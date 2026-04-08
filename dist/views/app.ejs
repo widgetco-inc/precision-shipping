@@ -1,144 +1,363 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WidgetCo Precision Shipping</title>
-    <link rel="stylesheet" href="/styles.css" />
-  </head>
-  <body>
-    <main class="shell">
-      <aside class="sidebar">
-        <div>
-          <h1>Precision Shipping</h1>
-          <p class="muted">WidgetCo custom shipping app</p>
-        </div>
-        <nav>
-          <a href="#overview">Overview</a>
-          <a href="#methods">Shipping methods</a>
-          <a href="#rules">Rules</a>
-          <a href="#preview">Preview</a>
-          <a href="#access">Access</a>
-        </nav>
-      </aside>
-      <section class="content">
-        <header class="card hero" id="overview">
-          <div>
-            <p class="eyebrow">Signed in as</p>
-            <h2><%= admin.email %></h2>
-            <p class="muted">Only approved shipping administrators can open this app.</p>
-          </div>
-          <div class="pill">Store: widgetco-inc.myshopify.com</div>
-        </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WidgetCo Precision Shipping</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<main class="shell">
+  <aside class="sidebar">
+    <div>
+      <strong>Precision Shipping</strong>
+      <p class="muted">WidgetCo custom shipping app</p>
+    </div>
+    <nav>
+      <a href="#overview">Overview</a>
+      <a href="#methods">Shipping methods</a>
+      <a href="#rules">Rules</a>
+      <a href="#preview">Preview</a>
+      <a href="#weights">Weights</a>
+      <a href="#access">Access</a>
+    </nav>
+  </aside>
 
-        <section class="grid two">
-          <article class="card">
-            <p class="eyebrow">Packaging</p>
-            <h3>Current defaults</h3>
-            <ul>
-              <li>Default package tare: <strong><%= settings.packaging.defaultPackageTareLb %> lb</strong></li>
-              <li>FedEx envelope enabled: <strong><%= settings.packaging.useFedexEnvelopeForExpress ? 'Yes' : 'No' %></strong></li>
-              <li>Express envelope max: <strong><%= settings.packaging.expressEnvelopeMaxWeightLb %> lb</strong></li>
-            </ul>
-          </article>
-          <article class="card">
-            <p class="eyebrow">Rate engine</p>
-            <h3>How weight is calculated</h3>
-            <p>True unit weight × quantity + package tare, then services are filtered by your carrier rules.</p>
-          </article>
-        </section>
+  <section class="content">
+    <header class="card hero" id="overview">
+      <div>
+        <p class="eyebrow">Signed in as</p>
+        <strong><%= admin.email %></strong>
+        <p class="muted">Only approved shipping administrators can open this app.</p>
+      </div>
+      <div class="pill">Store: widgetco-inc.myshopify.com</div>
+    </header>
 
-        <section class="card" id="methods">
-          <p class="eyebrow">Shipping methods</p>
-          <h3>Enabled services</h3>
-          <div class="carrier-groups">
-            <% Object.entries(settings.carriers).forEach(([carrier, config]) => { %>
-              <div class="carrier-box">
-                <div class="carrier-head">
-                  <h4><%= carrier.toUpperCase() %></h4>
-                  <span class="pill <%= config.enabled ? 'on' : 'off' %>"><%= config.enabled ? 'Enabled' : 'Disabled' %></span>
-                </div>
-                <ul>
-                  <% config.services.forEach((service) => { %>
-                    <li>
-                      <span><%= service.label %></span>
-                      <span class="pill <%= service.enabled ? 'on' : 'off' %>"><%= service.enabled ? 'ON' : 'OFF' %></span>
-                    </li>
-                  <% }) %>
-                </ul>
-              </div>
-            <% }) %>
-          </div>
-        </section>
+    <section class="grid two">
+      <article class="card">
+        <p class="eyebrow">Packaging</p>
+        <h2>Current defaults</h2>
+        <ul>
+          <li>Default package tare: <strong><%= settings.packaging.defaultPackageTareLb %></strong> lb</li>
+          <li>FedEx envelope enabled: <strong><%= settings.packaging.useFedexEnvelopeForExpress ? 'Yes' : 'No' %></strong></li>
+          <li>Express envelope max: <strong><%= settings.packaging.expressEnvelopeMaxWeightLb %></strong> lb</li>
+        </ul>
+      </article>
+      <article class="card">
+        <p class="eyebrow">Rate engine</p>
+        <h2>How weight is calculated</h2>
+        <p>True unit weight &times; quantity + package tare, then services are filtered by your carrier rules.</p>
+      </article>
+    </section>
 
-        <section class="card" id="rules">
-          <p class="eyebrow">Rules</p>
-          <h3>Business logic summary</h3>
-          <ul>
-            <li>Use true micro-weight, never rounded catalog weight, for shipment math.</li>
-            <li>USPS Ground Advantage stays under 1 lb.</li>
-            <li>USPS International Mail stays under 4 lb.</li>
-            <li>FedEx express services can use envelope logic under <%= settings.packaging.expressEnvelopeMaxWeightLb %> lb when eligible.</li>
-            <li>Everything else falls back to the enabled parcel services for the destination.</li>
-          </ul>
-        </section>
-
-        <section class="card" id="preview">
-          <p class="eyebrow">Preview</p>
-          <h3>Test a shipment</h3>
-          <form id="previewForm" class="preview-form">
-            <div class="grid three">
-              <label>
-                <span>Country</span>
-                <input name="countryCode" value="US" />
-              </label>
-              <label>
-                <span>Quantity</span>
-                <input name="quantity" type="number" value="25000" min="1" />
-              </label>
-              <label>
-                <span>True weight (grams)</span>
-                <input name="trueWeightGrams" type="number" step="0.0001" value="0.1" min="0.0001" />
-              </label>
+    <section class="card" id="methods">
+      <p class="eyebrow">Shipping methods</p>
+      <h2>Enabled services</h2>
+      <div class="carrier-groups">
+        <% Object.entries(settings.carriers).forEach(([carrier, config]) => { %>
+          <div class="carrier-box">
+            <div class="carrier-head">
+              <h4><%= carrier.toUpperCase() %></h4>
+              <span class="pill <%= config.enabled ? 'on' : 'off' %>"><%= config.enabled ? 'Enabled' : 'Disabled' %></span>
             </div>
-            <button class="button" type="submit">Run preview</button>
-          </form>
-          <pre id="previewOutput" class="output">Preview results will appear here.</pre>
-        </section>
+            <div>
+              <% config.services.forEach(service => { %>
+                <span><%= service.label %></span>
+                <span class="pill <%= service.enabled ? 'on' : 'off' %>"><%= service.enabled ? 'ON' : 'OFF' %></span>
+              <% }) %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </section>
 
-        <section class="card" id="access">
-          <p class="eyebrow">Access</p>
-          <h3>Approved admins</h3>
-          <ul>
-            <% settings.access.allowedAdminEmails.forEach((email) => { %>
-              <li><%= email %></li>
-            <% }) %>
-          </ul>
-        </section>
-      </section>
-    </main>
+    <section class="card" id="rules">
+      <p class="eyebrow">Rules</p>
+      <h2>Business logic summary</h2>
+      <ul>
+        <li>Use true micro-weight, never rounded catalog weight, for shipment math.</li>
+        <li>USPS Ground Advantage stays under 1 lb.</li>
+        <li>USPS International Mail stays under 4 lb.</li>
+        <li>FedEx express services can use envelope logic under <%= settings.packaging.expressEnvelopeMaxWeightLb %> lb when eligible.</li>
+        <li>Everything else falls back to the enabled parcel services for the destination.</li>
+      </ul>
+    </section>
 
-    <script>
-      document.getElementById('previewForm').addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const form = new FormData(event.target);
-        const payload = {
-          destination: { countryCode: String(form.get('countryCode') || 'US') },
-          lines: [{ quantity: Number(form.get('quantity') || 1), trueWeightGrams: Number(form.get('trueWeightGrams') || 0.1) }]
-        };
+    <section class="card sh-card" id="preview">
+      <p class="eyebrow">Preview</p>
+      <h2>Test a shipment</h2>
+      <form id="pForm" class="preview-form">
+        <div class="grid three">
+          <label>
+            <span>Country</span>
+            <input name="cc" value="US" />
+          </label>
+          <label>
+            <span>Postal code</span>
+            <input name="zip" value="10001" />
+          </label>
+          <label>
+            <span>Quantity</span>
+            <input name="qty" type="number" value="25000" min="1" />
+          </label>
+          <label>
+            <span>True weight (grams)</span>
+            <input name="wg" type="number" step="0.0001" value="0.1" min="0.0001" />
+          </label>
+        </div>
+        <button class="button" type="submit">Run preview</button>
+      </form>
+      <pre id="pOut" class="output">Preview results will appear here.</pre>
+    </section>
 
-        const response = await fetch('/api/preview', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-admin-email': '<%= admin.email %>'
-          },
-          body: JSON.stringify(payload)
-        });
+    <!-- ── Weights ──────────────────────────────────────────────────────── -->
+    <section class="card" id="weights">
+      <p class="eyebrow">Weights</p>
+      <h2>Variant true-weight sync</h2>
+      <p class="muted">Scan every Shopify product variant and flag any whose <code>custom.actual_weight_grams</code> metafield is missing or differs &gt;20% from the Shopify catalog weight.</p>
 
-        const data = await response.json();
-        document.getElementById('previewOutput').textContent = JSON.stringify(data, null, 2);
-      });
-    </script>
-  </body>
+      <!-- Nightly alert banner -->
+      <div id="nightlyAlertBanner" style="display:none" class="alert-banner"></div>
+
+      <!-- CSV import -->
+      <details class="csv-import-details">
+        <summary>Import weights from CSV</summary>
+        <div class="csv-import-body">
+          <p class="muted">Upload a CSV with columns <code>sku,grams</code> (header row optional). Each row sets the <code>actual_weight_grams</code> metafield for that SKU.</p>
+          <div class="csv-upload-row">
+            <input type="file" id="csvFileInput" accept=".csv,text/csv,text/plain" />
+            <button class="button" id="csvUploadBtn" type="button">Upload &amp; Import</button>
+          </div>
+          <pre id="csvResult" class="output" style="display:none"></pre>
+        </div>
+      </details>
+
+      <!-- Sync toolbar -->
+      <div class="weights-toolbar">
+        <button class="button" id="syncWeightsBtn" type="button">Run sync</button>
+        <span id="syncStatus" class="muted"></span>
+      </div>
+
+      <!-- SKU search -->
+      <div class="sku-search-row">
+        <input type="text" id="skuSearch" placeholder="Search SKU or product…" />
+      </div>
+
+      <div id="syncWarnings"></div>
+
+      <table id="weightsTable" class="weights-table" style="display:none">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Variant</th>
+            <th>SKU</th>
+            <th>Shopify (g)</th>
+            <th>True weight (g)</th>
+            <th>Status</th>
+            <th>Edit</th>
+          </tr>
+        </thead>
+        <tbody id="weightsTableBody"></tbody>
+      </table>
+    </section>
+
+    <section class="card" id="access">
+      <p class="eyebrow">Access</p>
+      <h2>Approved admins</h2>
+      <ul>
+        <% settings.access.allowedAdminEmails.forEach(email => { %>
+          <li><%= email %></li>
+        <% }) %>
+      </ul>
+    </section>
+  </section>
+</main>
+
+<script>
+// ── Nightly alert banner ──────────────────────────────────────────────────────
+async function loadNightlyAlerts() {
+  const res = await fetch('/api/weights/alerts');
+  if (!res.ok) return;
+  const { alert } = await res.json();
+  const banner = document.getElementById('nightlyAlertBanner');
+  if (!alert) return;
+  if (alert.warnings.length === 0) {
+    banner.style.display = 'none';
+    return;
+  }
+  const ranAt = new Date(alert.ranAt).toLocaleString();
+  banner.style.display = 'block';
+  banner.innerHTML =
+    '<strong>⚠ Nightly weight check (' + ranAt + '): ' + alert.warnings.length + ' issue(s) found</strong>' +
+    '<ul>' +
+    alert.warnings.map(w =>
+      '<li class="warning-' + w.status + '"><strong>' + escHtml(w.productTitle) + ' — ' + escHtml(w.variantTitle) + '</strong>' +
+      ' (' + escHtml(w.sku) + '): ' + escHtml(w.message) + '</li>'
+    ).join('') +
+    '</ul>';
+}
+
+// ── Weights sync ──────────────────────────────────────────────────────────────
+async function loadSyncStatus() {
+  const res = await fetch('/api/weights/sync-status');
+  if (!res.ok) return;
+  const data = await res.json();
+  renderWeightsResult(data.result);
+  if (data.inProgress) {
+    document.getElementById('syncStatus').textContent = 'Sync in progress…';
+    setTimeout(loadSyncStatus, 2000);
+  }
+}
+
+function escHtml(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderWeightsResult(result) {
+  if (!result) return;
+  const warnings = result.warnings ?? [];
+  const records  = result.records  ?? [];
+  const statusEl = document.getElementById('syncStatus');
+  statusEl.textContent = 'Last sync: ' + records.length + ' variants scanned, ' + warnings.length + ' warning(s)';
+
+  const warnDiv = document.getElementById('syncWarnings');
+  if (warnings.length) {
+    warnDiv.innerHTML =
+      '<ul class="warnings">' +
+      warnings.map(w =>
+        '<li class="warning-' + w.status + '"><strong>' + escHtml(w.productTitle) + ' — ' + escHtml(w.variantTitle) + '</strong>' +
+        ' (' + escHtml(w.sku) + '): ' +
+        (w.status === 'missing' ? 'true weight metafield not set' : escHtml(w.metafieldGrams) + 'g vs catalog ' + escHtml(w.shopifyCatalogGrams) + 'g') +
+        '</li>'
+      ).join('') +
+      '</ul>';
+  } else {
+    warnDiv.innerHTML = '';
+  }
+
+  if (records.length) {
+    const tbody = document.getElementById('weightsTableBody');
+    tbody.innerHTML = records.map(r =>
+      '<tr data-variant-id="' + r.variantId + '" class="status-' + r.status + '">' +
+      '<td>' + escHtml(r.productTitle) + '</td>' +
+      '<td>' + escHtml(r.variantTitle) + '</td>' +
+      '<td>' + escHtml(r.sku) + '</td>' +
+      '<td>' + r.shopifyCatalogGrams + '</td>' +
+      '<td class="weight-cell">' +
+        '<span class="weight-display">' + (r.metafieldGrams !== null ? r.metafieldGrams : '—') + '</span>' +
+        '<input class="weight-input" type="number" step="0.0001" min="0.0001" value="' + (r.metafieldGrams ?? '') + '" style="display:none" />' +
+      '</td>' +
+      '<td><span class="pill ' + (r.status === 'ok' ? 'on' : 'off') + '">' + r.status.toUpperCase() + '</span></td>' +
+      '<td>' +
+        '<button class="btn-edit" type="button" onclick="startEditWeight(this)">Edit</button>' +
+        '<button class="btn-save" type="button" onclick="saveWeight(this)" style="display:none">Save</button>' +
+      '</td>' +
+      '</tr>'
+    ).join('');
+    document.getElementById('weightsTable').style.display = '';
+    applySkuFilter();
+  }
+}
+
+function startEditWeight(btn) {
+  const row = btn.closest('tr');
+  row.querySelector('.weight-display').style.display = 'none';
+  row.querySelector('.weight-input').style.display = '';
+  row.querySelector('.btn-edit').style.display = 'none';
+  row.querySelector('.btn-save').style.display = '';
+}
+
+async function saveWeight(btn) {
+  const row = btn.closest('tr');
+  const variantId = row.dataset.variantId;
+  const input = row.querySelector('.weight-input');
+  const grams = parseFloat(input.value);
+  if (!grams || grams <= 0) { alert('Enter a valid weight in grams.'); return; }
+  const res = await fetch('/api/weights/' + variantId, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ grams }),
+  });
+  if (!res.ok) { alert('Save failed.'); return; }
+  row.querySelector('.weight-display').textContent = grams;
+  row.querySelector('.weight-display').style.display = '';
+  input.style.display = 'none';
+  row.querySelector('.btn-edit').style.display = '';
+  btn.style.display = 'none';
+}
+
+document.getElementById('syncWeightsBtn').addEventListener('click', async () => {
+  const statusEl = document.getElementById('syncStatus');
+  statusEl.textContent = 'Starting sync…';
+  document.getElementById('syncWeightsBtn').disabled = true;
+  const res = await fetch('/api/weights/sync', { method: 'POST' });
+  if (!res.ok) { statusEl.textContent = 'Sync failed.'; document.getElementById('syncWeightsBtn').disabled = false; return; }
+  statusEl.textContent = 'Sync running…';
+  setTimeout(() => {
+    document.getElementById('syncWeightsBtn').disabled = false;
+    loadSyncStatus();
+  }, 1500);
+});
+
+// ── SKU search / filter ───────────────────────────────────────────────────────
+function applySkuFilter() {
+  const q = document.getElementById('skuSearch').value.toLowerCase().trim();
+  const rows = document.querySelectorAll('#weightsTableBody tr');
+  rows.forEach(row => {
+    if (!q) { row.style.display = ''; return; }
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(q) ? '' : 'none';
+  });
+}
+
+document.getElementById('skuSearch').addEventListener('input', applySkuFilter);
+
+// ── CSV import ────────────────────────────────────────────────────────────────
+document.getElementById('csvUploadBtn').addEventListener('click', async () => {
+  const fileInput = document.getElementById('csvFileInput');
+  const resultPre = document.getElementById('csvResult');
+  if (!fileInput.files || fileInput.files.length === 0) {
+    alert('Please select a CSV file first.');
+    return;
+  }
+  const file = fileInput.files[0];
+  const csvText = await file.text();
+  const btn = document.getElementById('csvUploadBtn');
+  btn.disabled = true;
+  btn.textContent = 'Importing…';
+  resultPre.style.display = '';
+  resultPre.textContent = 'Sending…';
+  try {
+    const res = await fetch('/api/weights/csv', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ csv: csvText }),
+    });
+    const data = await res.json();
+    if (data.error) {
+      resultPre.textContent = 'Error: ' + data.error;
+    } else {
+      resultPre.textContent =
+        'Done: ' + data.succeeded + '/' + data.attempted + ' rows imported.' +
+        (data.skipped > 0 ? ' ' + data.skipped + ' skipped.' : '') +
+        (data.errors && data.errors.length > 0
+          ? '\n\nIssues:\n' + data.errors.map(e => '  ' + e.sku + ': ' + e.reason).join('\n')
+          : '');
+      // Refresh the table
+      loadSyncStatus();
+    }
+  } catch (err) {
+    resultPre.textContent = 'Upload failed: ' + err.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Upload & Import';
+  }
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadSyncStatus();
+loadNightlyAlerts();
+</script>
+<script src="/shipping-preview.js"></script>
+</body>
 </html>
