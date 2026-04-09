@@ -1,5 +1,5 @@
 [build]
-buildCommand = "npm install --omit=dev"
+buildCommand = "npm install --omit=dev && cp -R src/public dist/public && cp -R src/views dist/views"
 
 [deploy]
 startCommand = "node dist/server.js"
