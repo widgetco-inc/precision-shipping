@@ -1,7 +1,7 @@
 [build]
-buildCommand = "npm install --omit=dev && echo PWD=$(pwd) && ls -la dist/public/ && cp -f src/views/app.ejs dist/views/app.ejs && cp -f src/public/shipping-preview.js dist/public/shipping-preview.js && echo DONE && ls -la dist/public/"
+buildCommand = "npm install --omit=dev"
 
 [deploy]
-startCommand = "node dist/server.js"
+startCommand = "node -e \"const fs=require('fs');try{fs.copyFileSync('src/views/app.ejs','dist/views/app.ejs');fs.copyFileSync('src/public/shipping-preview.js','dist/public/shipping-preview.js');console.log('Files copied OK');}catch(e){console.error('Copy failed:',e.message);}\" && node dist/server.js"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
