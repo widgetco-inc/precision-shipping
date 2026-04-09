@@ -1,5 +1,5 @@
 [build]
-buildCommand = "npm install --production=false && npm run build"
+buildCommand = "npm install --omit=dev && cp -f src/views/app.ejs dist/views/app.ejs && cp -f src/public/shipping-preview.js dist/public/shipping-preview.js"
 
 [deploy]
 startCommand = "node dist/server.js"
