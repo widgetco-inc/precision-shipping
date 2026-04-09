@@ -14,11 +14,12 @@ const carrier_1 = __importDefault(require("./routes/carrier"));
 const admin_1 = __importDefault(require("./routes/admin"));
 const app = (0, express_1.default)();
 app.set('view engine', 'ejs');
-app.set('views', path_1.default.join(__dirname, 'views'));
+app.set('views', [path_1.default.join(__dirname, '..', 'src', 'views'), path_1.default.join(__dirname, 'views')]);
 app.use((0, helmet_1.default)({ contentSecurityPolicy: false }));
 app.use((0, cors_1.default)());
 app.use(express_1.default.json({ limit: '2mb' }));
 app.use(express_1.default.urlencoded({ extended: true }));
+app.use(express_1.default.static(path_1.default.join(__dirname, '..', 'src', 'public')));
 app.use(express_1.default.static(path_1.default.join(__dirname, 'public')));
 app.get('/health', (_req, res) => {
     res.json({ ok: true, service: 'widgetco-shipping-app' });
