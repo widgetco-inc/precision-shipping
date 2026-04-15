@@ -16,18 +16,18 @@ router.get('/login', (req, res) => {
     if (req.session && req.session.userEmail) {
         return res.redirect('/shipping/preview');
     }
-    res.render('login', { error: null });
+    res.render('login', { error: null, prefill: '' });
 });
 // POST /login
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     const user = users.find(u => u.email === email);
     if (!user || !user.hash) {
-        return res.render('login', { error: 'Invalid email or password.' });
+        return res.render('login', { error: 'Invalid email or password.', prefill: email || '' });
     }
     const match = await bcryptjs_1.default.compare(password, user.hash);
     if (!match) {
-        return res.render('login', { error: 'Invalid email or password.' });
+        return res.render('login', { error: 'Invalid email or password.', prefill: email || '' });
     }
     req.session.userEmail = user.email;
     res.redirect('/shipping/preview');
