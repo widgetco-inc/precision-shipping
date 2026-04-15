@@ -24,6 +24,9 @@ exports.env = {
     allowedAdminEmails: (process.env.ALLOWED_ADMIN_EMAILS ?? '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
     localAdminLabel: process.env.LOCAL_ADMIN_LABEL ?? 'local-admin@widgetco.local',
     sessionTokenSecret: process.env.SESSION_TOKEN_SECRET ?? 'local-dev-secret',
+    sessionSecret: process.env.SESSION_SECRET ?? '',
+    jonathanPasswordHash: process.env.JONATHAN_PASSWORD_HASH ?? '',
+    lauraPasswordHash: process.env.LAURA_PASSWORD_HASH ?? '',
     fedexAccountNumber: process.env.FEDEX_ACCOUNT_NUMBER ?? '',
     fedexApiKey: process.env.FEDEX_API_KEY ?? '',
     fedexApiSecret: process.env.FEDEX_API_SECRET ?? ''
