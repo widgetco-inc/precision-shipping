@@ -24,14 +24,13 @@ app.use(express_1.default.static(path_1.default.join(__dirname, '..', 'src', 'pu
 app.use(express_1.default.static(path_1.default.join(__dirname, 'public')));
 app.get('/health', (_req, res) => {
     res.json({ ok: true, service: 'widgetco-shipping-app' });
+});
 app.get('/version', (_req, res) => {
-    res.json({ v: '2026-04-09-B', src: true });
+    res.json({ v: '2026-04-15', src: true });
 });
 app.get('/shipping-preview.js', (_req, res) => {
     res.set('Content-Type', 'application/javascript');
     res.sendFile(path_1.default.join(__dirname, '..', 'src', 'public', 'shipping-preview.js'));
-});
-
 });
 app.use(app_1.default);
 app.use(preview_1.default);
