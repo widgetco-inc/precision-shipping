@@ -5,6 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>WidgetCo Precision Shipping</title>
   <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .est-section { margin-top: 20px; }
+    .est-section-label { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+    .est-sku-header { display: grid; grid-template-columns: 1fr 80px 130px 110px 32px; gap: 8px; padding: 4px 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); border-bottom: 1px solid var(--line); }
+    .est-row { display: grid; grid-template-columns: 1fr 80px 130px 110px 32px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+    .est-row:last-child { border-bottom: none; }
+    .est-sku-wrap { position: relative; }
+    .est-sku-input, .est-qty-input, .est-manual-weight { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 13px; box-sizing: border-box; background: #fff; }
+    .est-sku-input:focus, .est-qty-input:focus, .est-manual-weight:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(17,24,39,.08); }
+    .est-qty-input { text-align: center; }
+    .est-unit-g { font-size: 12px; color: var(--muted); }
+    .est-unit-g.found { color: var(--pill-on-text); font-weight: 600; }
+    .est-row-total { font-size: 13px; font-weight: 600; color: var(--text); }
+    .est-remove-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 16px; padding: 2px 6px; border-radius: 4px; transition: color .15s; line-height: 1; }
+    .est-remove-btn:hover { color: #dc2626; }
+    .est-add-btn { margin-top: 10px; background: rgba(17,24,39,.04); border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; padding: 8px 16px; width: 100%; transition: background .15s; }
+    .est-add-btn:hover { background: rgba(17,24,39,.08); color: var(--text); }
+    .est-ac { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--line); border-radius: 8px; z-index: 100; max-height: 180px; overflow-y: auto; margin-top: 2px; box-shadow: 0 8px 24px rgba(17,24,39,.12); display: none; }
+    .est-ac-item { padding: 8px 12px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .est-ac-item:hover { background: var(--bg); }
+    .est-ac-wt { font-size: 11px; color: var(--pill-on-text); font-weight: 600; }
+    .est-totals { display: flex; flex-wrap: wrap; gap: 20px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin-top: 16px; margin-bottom: 4px; font-size: 13px; color: var(--muted); }
+    .est-total-item strong { color: var(--text); margin-left: 4px; }
+    .est-label { display: grid; gap: 5px; }
+    .est-label-text { font-size: 12px; color: var(--muted); font-weight: 500; }
+  </style>
 </head>
 <body>
 <main class="shell">
@@ -17,7 +43,7 @@
       <a href="#overview" class="nav-link">Overview</a>
       <a href="#methods" class="nav-link">Shipping methods</a>
       <a href="#rules" class="nav-link">Rules</a>
-      <a href="#preview" class="nav-link">Preview</a>
+      <a href="#preview" class="nav-link">Estimator</a>
       <a href="#weights" class="nav-link">Weights</a>
       <a href="#access" class="nav-link">Access</a>
     </nav>
@@ -91,31 +117,67 @@
     </div>
 
     <div class="page" id="page-preview">
-      <section class="card sh-card">
-        <p class="eyebrow">Preview</p>
-        <h2>Test a shipment</h2>
-        <form id="pForm" class="preview-form">
+      <section class="card estimator-card">
+        <p class="eyebrow">Estimator</p>
+        <h2>Rate Estimator</h2>
+
+        <div class="est-section">
           <div class="grid three">
-            <label>
-              <span>Country</span>
-              <input name="cc" value="US" />
+            <label class="est-label">
+              <span class="est-label-text">From ZIP</span>
+              <input id="estFromZip" type="text" placeholder="e.g. 90210" maxlength="10" />
             </label>
-            <label>
-              <span>Postal code</span>
-              <input name="zip" value="10001" />
+            <label class="est-label">
+              <span class="est-label-text">To ZIP / Postal code</span>
+              <input id="estToZip" type="text" placeholder="e.g. 10001" />
             </label>
-            <label>
-              <span>Quantity</span>
-              <input name="qty" type="number" value="25000" min="1" />
-            </label>
-            <label>
-              <span>True weight (grams)</span>
-              <input name="wg" type="number" step="0.0001" value="0.1" min="0.0001" />
+            <label class="est-label">
+              <span class="est-label-text">To Country</span>
+              <input id="estCountry" type="text" placeholder="e.g. US" value="US" maxlength="3" />
             </label>
           </div>
-          <button class="button" type="submit">Run preview</button>
-        </form>
-        <pre id="pOut" class="output">Preview results will appear here.</pre>
+        </div>
+
+        <div class="est-section">
+          <p class="est-section-label">Box size <span class="muted">(optional — inches)</span></p>
+          <div class="grid three">
+            <label class="est-label">
+              <span class="est-label-text">Length</span>
+              <input id="estBoxL" type="number" step="0.1" min="0" placeholder="L" />
+            </label>
+            <label class="est-label">
+              <span class="est-label-text">Width</span>
+              <input id="estBoxW" type="number" step="0.1" min="0" placeholder="W" />
+            </label>
+            <label class="est-label">
+              <span class="est-label-text">Height</span>
+              <input id="estBoxH" type="number" step="0.1" min="0" placeholder="H" />
+            </label>
+          </div>
+        </div>
+
+        <div class="est-section">
+          <p class="est-section-label">Items</p>
+          <div class="est-sku-header">
+            <span>SKU</span><span>Qty</span><span>g / unit</span><span>Total g</span><span></span>
+          </div>
+          <div id="estSkuRows"></div>
+          <button class="est-add-btn" id="estAddRow" type="button">+ Add SKU</button>
+        </div>
+
+        <div class="est-totals">
+          <div class="est-total-item">Total items: <strong id="estTotalQty">0</strong></div>
+          <div class="est-total-item">Total weight: <strong id="estTotalG">0 g</strong></div>
+          <div class="est-total-item">= <strong id="estTotalLb">0 lb</strong></div>
+          <div class="est-total-item" id="estBoxDimDisplay" style="display:none">Box: <strong id="estBoxDimText"></strong></div>
+        </div>
+
+        <button class="button" id="estRunBtn" type="button">Get Rates</button>
+
+        <div id="estResults" style="display:none">
+          <p class="est-section-label" style="margin-top:20px">Preview Results</p>
+          <pre id="estOut" class="output"></pre>
+        </div>
       </section>
     </div>
 
@@ -186,6 +248,7 @@
 
   </section>
 </main>
+
 <script>
 // ── Nightly alert banner ──────────────────────────────────────────────────────
 async function loadNightlyAlerts() {
@@ -371,37 +434,10 @@ document.getElementById('csvUploadBtn').addEventListener('click', async () => {
 loadSyncStatus();
 loadNightlyAlerts();
 </script>
+
 <script>
-// ── Precision Shipping — Preview Page ───────────────────────────────────────────────────
-// 1. Original single-line preview form (existing behaviour)
-// 2. SKU Cart Estimator – add multiple SKUs + quantities,
-//    auto-resolves true weights, calls the preview API, shows
-//    a formatted breakdown of shipment weights + carrier rates.
-
-/* ─── 1. ORIGINAL FORM ─── */
-document.getElementById('pForm').addEventListener('submit', async function (e) {
-  e.preventDefault();
-  const f   = new FormData(e.target);
-  const out = document.getElementById('pOut');
-  out.textContent = 'Loading…';
-  try {
-    const r = await fetch('/shipping/api/preview', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        destination: { countryCode: String(f.get('cc') || 'US'), postalCode: String(f.get('zip') || '') },
-        lines: [{ quantity: Number(f.get('qty') || 1), trueWeightGrams: Number(f.get('wg') || 0) }]
-      })
-    });
-    out.textContent = JSON.stringify(await r.json(), null, 4);
-  } catch (err) {
-    out.textContent = 'Error: ' + err.message;
-  }
-});
-
-/* ─── 2. SKU CART ESTIMATOR ─── */
-(async function initSkuEstimator() {
-  /* Load SKU weights */
+// ── Rate Estimator ──────────────────────────────────────────────────────────
+(async function initEstimator() {
   const skuWeights = {}, skuList = [];
   try {
     const html = await fetch('/shipping/sku-weights').then(r => r.text());
@@ -415,184 +451,184 @@ document.getElementById('pForm').addEventListener('submit', async function (e) {
     });
   } catch (_) {}
 
-  /* Styles */
-  const style = document.createElement('style');
-  style.textContent = `
-    .sku-estimator{margin-top:24px;border-top:1px solid rgba(255,255,255,.10);padding-top:20px}
-    .sku-estimator-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-    .sku-estimator-title{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#9ca3af}
-    .sku-cart-table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:14px}
-    .sku-cart-table th{text-align:left;font-size:12px;font-weight:500;color:#9ca3af;padding:0 8px 8px;border-bottom:1px solid rgba(255,255,255,.08)}
-    .sku-cart-table td{padding:8px;vertical-align:middle;border-bottom:1px solid rgba(255,255,255,.05)}
-    .sku-cart-table tr:last-child td{border-bottom:none}
-    .sku-input-wrap{position:relative;width:100%}
-    .sku-input,.sku-qty-input{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#f1f5f9;font-family:inherit;font-size:13px;padding:7px 10px;outline:none;transition:border-color .15s;box-sizing:border-box;width:100%}
-    .sku-qty-input{width:70px;text-align:center}
-    .sku-input:focus,.sku-qty-input:focus{border-color:rgba(255,255,255,.4)}
-    .sku-input.sku-found{border-color:#4ade80}.sku-input.sku-not-found{border-color:#f87171}
-    .sku-weight-badge{font-size:12px;color:#9ca3af;white-space:nowrap}.sku-weight-badge.found{color:#4ade80}
-    .sku-remove-btn{background:none;border:none;cursor:pointer;color:#6b7280;font-size:16px;padding:2px 6px;border-radius:4px;transition:color .15s,background .15s}
-    .sku-remove-btn:hover{color:#f87171;background:rgba(248,113,113,.1)}
-    .sku-add-btn{background:rgba(255,255,255,.06);border:1px dashed rgba(255,255,255,.2);border-radius:6px;color:#9ca3af;font-size:13px;cursor:pointer;padding:8px 16px;width:100%;transition:background .15s,color .15s;font-family:inherit;margin-bottom:14px}
-    .sku-add-btn:hover{background:rgba(255,255,255,.10);color:#f1f5f9}
-    .sku-totals{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px 14px;display:flex;gap:24px;margin-bottom:14px;font-size:13px;flex-wrap:wrap}
-    .sku-total-item{color:#9ca3af}.sku-total-item strong{color:#f1f5f9;margin-left:6px}
-    .sku-run-btn{background:#1e293b;border:1px solid rgba(255,255,255,.18);color:#f1f5f9;font-family:inherit;font-size:14px;font-weight:600;padding:10px 22px;border-radius:8px;cursor:pointer;transition:background .15s}
-    .sku-run-btn:hover{background:#334155}.sku-run-btn:disabled{opacity:.5;cursor:default}
-    .sku-clear-btn{background:none;border:none;font-size:12px;color:#6b7280;cursor:pointer;padding:2px 8px;border-radius:4px;font-family:inherit;transition:color .15s}
-    .sku-clear-btn:hover{color:#f87171}
-    .sku-autocomplete{position:absolute;top:100%;left:0;right:0;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:6px;z-index:1000;max-height:180px;overflow-y:auto;margin-top:2px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none}
-    .sku-autocomplete-item{padding:8px 12px;font-size:13px;cursor:pointer;color:#e2e8f0;display:flex;justify-content:space-between}
-    .sku-autocomplete-item:hover{background:rgba(255,255,255,.1)}
-    .sku-autocomplete-weight{font-size:11px;color:#4ade80;margin-left:8px}
-  `;
-  document.head.appendChild(style);
+  function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  /* HTML */
-  document.querySelector('.sh-card').insertAdjacentHTML('beforeend', `
-    <div class="sku-estimator" id="skuEstimator">
-      <div class="sku-estimator-header">
-        <span class="sku-estimator-title">SKU Cart Estimator</span>
-        <button class="sku-clear-btn" id="skuClearAll">Clear all</button>
-      </div>
-      <table class="sku-cart-table">
-        <thead><tr><th style="width:45%">SKU</th><th style="width:15%">Qty</th><th style="width:25%">Unit weight</th><th style="width:15%"></th></tr></thead>
-        <tbody id="skuCartBody"></tbody>
-      </table>
-      <button class="sku-add-btn" id="skuAddRow">+ Add SKU</button>
-      <div class="sku-totals">
-        <span class="sku-total-item">Items: <strong id="skuTotalQty">0</strong></span>
-        <span class="sku-total-item">Total weight (g): <strong id="skuTotalWeightG">0</strong></span>
-        <span class="sku-total-item">Total weight (lb): <strong id="skuTotalWeightLb">0</strong></span>
-        <span class="sku-total-item">Lines: <strong id="skuTotalLines">0</strong></span>
-      </div>
-      <button class="sku-run-btn" id="skuRunPreview">Run preview with SKU cart</button>
-    </div>
-  `);
-
-  /* Logic */
-  let rowCount = 0;
-  const getRows = () => Array.from(document.querySelectorAll('#skuCartBody tr[data-row]'));
+  function getRows() { return Array.from(document.querySelectorAll('#estSkuRows .est-row')); }
 
   function updateTotals() {
-    let qty = 0, wg = 0, lines = 0;
-    getRows().forEach(r => {
-      const s = r.querySelector('.sku-input').value.toUpperCase().trim();
-      const q = parseInt(r.querySelector('.sku-qty-input').value) || 0;
-      const w = skuWeights[s];
-      if (w !== undefined && q > 0) { qty += q; wg += q * w; lines++; }
+    let totalQty = 0, totalG = 0;
+    getRows().forEach(row => {
+      const skuVal = row.querySelector('.est-sku-input').value.toUpperCase().trim();
+      const qty    = parseInt(row.querySelector('.est-qty-input').value) || 0;
+      let unitG    = skuWeights[skuVal];
+      if (unitG === undefined) unitG = parseFloat(row.querySelector('.est-manual-weight').value) || 0;
+      const rowG   = unitG * qty;
+      row.querySelector('.est-row-total').textContent = (qty > 0 && unitG > 0) ? rowG.toFixed(2) + ' g' : '—';
+      if (qty > 0 && unitG > 0) { totalQty += qty; totalG += rowG; }
     });
-    document.getElementById('skuTotalQty').textContent      = qty.toLocaleString();
-    document.getElementById('skuTotalWeightG').textContent  = wg.toFixed(3);
-    document.getElementById('skuTotalWeightLb').textContent = (wg * 0.00220462).toFixed(4);
-    document.getElementById('skuTotalLines').textContent    = lines;
+    document.getElementById('estTotalQty').textContent = totalQty.toLocaleString();
+    document.getElementById('estTotalG').textContent   = totalG.toFixed(2) + ' g';
+    document.getElementById('estTotalLb').textContent  = (totalG / 453.59237).toFixed(4) + ' lb';
+    const L = parseFloat(document.getElementById('estBoxL').value) || 0;
+    const W = parseFloat(document.getElementById('estBoxW').value) || 0;
+    const H = parseFloat(document.getElementById('estBoxH').value) || 0;
+    const boxEl = document.getElementById('estBoxDimDisplay');
+    if (L > 0 && W > 0 && H > 0) {
+      document.getElementById('estBoxDimText').textContent = L + '×' + W + '×' + H + ' in';
+      boxEl.style.display = '';
+    } else { boxEl.style.display = 'none'; }
   }
 
-  function showAC(input, dd) {
-    const val = input.value.toUpperCase().trim();
+  function showAC(inp, dd) {
+    const val = inp.value.toUpperCase().trim();
     dd.innerHTML = '';
     if (!val) { dd.style.display = 'none'; return; }
     const matches = skuList.filter(s => s.toUpperCase().includes(val)).slice(0, 20);
     if (!matches.length) { dd.style.display = 'none'; return; }
     matches.forEach(sku => {
       const item = document.createElement('div');
-      item.className = 'sku-autocomplete-item';
+      item.className = 'est-ac-item';
       const w = skuWeights[sku.toUpperCase()];
-      item.innerHTML = `<span>${sku}</span><span class="sku-autocomplete-weight">${w !== undefined ? w + 'g' : ''}</span>`;
+      item.innerHTML = '<span>' + esc(sku) + '</span><span class="est-ac-wt">' + (w !== undefined ? w + ' g' : '') + '</span>';
       item.addEventListener('mousedown', e => {
         e.preventDefault();
-        input.value = sku; dd.style.display = 'none';
-        const row = input.closest('tr'), badge = row.querySelector('.sku-weight-badge');
-        if (w !== undefined) { input.className = 'sku-input sku-found'; badge.textContent = w + ' g/unit'; badge.className = 'sku-weight-badge found'; }
-        updateTotals(); row.querySelector('.sku-qty-input').focus();
+        inp.value = sku; dd.style.display = 'none';
+        const row = inp.closest('.est-row');
+        const unit = row.querySelector('.est-unit-g');
+        const manual = row.querySelector('.est-manual-weight');
+        if (w !== undefined) { unit.textContent = w + ' g'; unit.className = 'est-unit-g found'; manual.style.display = 'none'; }
+        else { unit.textContent = 'Not found — enter g:'; unit.className = 'est-unit-g'; manual.style.display = ''; }
+        updateTotals();
+        row.querySelector('.est-qty-input').focus();
       });
       dd.appendChild(item);
     });
     dd.style.display = 'block';
   }
 
-  function addRow(skuVal = '', qtyVal = 1) {
-    const id = ++rowCount;
-    const sku = skuVal.toUpperCase().trim(), w = skuWeights[sku], found = w !== undefined;
-    const tr = document.createElement('tr');
-    tr.setAttribute('data-row', id);
-    tr.innerHTML = `
-      <td><div class="sku-input-wrap">
-        <input type="text" class="sku-input${found ? ' sku-found' : ''}" placeholder="e.g. 1-250-BLK-L" value="${skuVal}" autocomplete="off"/>
-        <div class="sku-autocomplete"></div>
-      </div></td>
-      <td><input type="number" class="sku-qty-input" value="${qtyVal}" min="1" step="1"/></td>
-      <td><span class="sku-weight-badge${found ? ' found' : ''}">${found ? w + ' g/unit' : skuVal ? 'Not found' : '—'}</span></td>
-      <td><button class="sku-remove-btn" title="Remove">✕</button></td>`;
-    document.getElementById('skuCartBody').appendChild(tr);
-    const inp = tr.querySelector('.sku-input'), dd = tr.querySelector('.sku-autocomplete');
-    const badge = tr.querySelector('.sku-weight-badge');
+  let rowCount = 0;
+  function addRow(skuVal, qtyVal) {
+    skuVal = skuVal || ''; qtyVal = qtyVal || 1;
+    const id  = ++rowCount;
+    const sku = skuVal.toUpperCase().trim();
+    const w   = skuWeights[sku];
+    const found = typeof w === 'number';
+    const row = document.createElement('div');
+    row.className = 'est-row'; row.setAttribute('data-row', id);
+    row.innerHTML =
+      '<div class="est-sku-wrap">' +
+        '<input type="text" class="est-sku-input" placeholder="SKU" value="' + esc(skuVal) + '" autocomplete="off" />' +
+        '<div class="est-ac"></div>' +
+      '</div>' +
+      '<input type="number" class="est-qty-input" value="' + qtyVal + '" min="1" step="1" />' +
+      '<span class="est-unit-g' + (found ? ' found' : '') + '">' + (found ? w + ' g' : (skuVal ? 'Not found — enter g:' : '—')) + '</span>' +
+      '<input type="number" class="est-manual-weight" step="0.0001" min="0.0001" placeholder="g" style="display:' + (!found && skuVal ? '' : 'none') + '" />' +
+      '<span class="est-row-total">—</span>' +
+      '<button class="est-remove-btn" type="button">✕</button>';
+    document.getElementById('estSkuRows').appendChild(row);
+    const inp = row.querySelector('.est-sku-input');
+    const dd  = row.querySelector('.est-ac');
+    const unit = row.querySelector('.est-unit-g');
+    const manual = row.querySelector('.est-manual-weight');
     inp.addEventListener('input', () => {
       showAC(inp, dd);
       const s = inp.value.toUpperCase().trim(), wt = skuWeights[s];
-      if (!s)            { inp.className = 'sku-input'; badge.textContent = '—'; badge.className = 'sku-weight-badge'; }
-      else if (wt !== undefined) { inp.className = 'sku-input sku-found'; badge.textContent = wt + ' g/unit'; badge.className = 'sku-weight-badge found'; }
-      else               { inp.className = 'sku-input sku-not-found'; badge.textContent = 'Not found'; badge.className = 'sku-weight-badge'; }
+      if (!s)      { unit.textContent = '—'; unit.className = 'est-unit-g'; manual.style.display = 'none'; }
+      else if (wt !== undefined) { unit.textContent = wt + ' g'; unit.className = 'est-unit-g found'; manual.style.display = 'none'; }
+      else         { unit.textContent = 'Not found — enter g:'; unit.className = 'est-unit-g'; manual.style.display = ''; }
       updateTotals();
     });
     inp.addEventListener('focus', () => showAC(inp, dd));
     inp.addEventListener('blur',  () => setTimeout(() => { dd.style.display = 'none'; }, 150));
     inp.addEventListener('keydown', e => { if (e.key === 'Tab' || e.key === 'Enter') dd.style.display = 'none'; });
-    tr.querySelector('.sku-qty-input').addEventListener('input', updateTotals);
-    tr.querySelector('.sku-remove-btn').addEventListener('click', () => { tr.remove(); updateTotals(); });
+    row.querySelector('.est-qty-input').addEventListener('input', updateTotals);
+    manual.addEventListener('input', updateTotals);
+    row.querySelector('.est-remove-btn').addEventListener('click', () => { row.remove(); updateTotals(); });
     updateTotals();
     if (!skuVal) inp.focus();
   }
 
+  ['estBoxL','estBoxW','estBoxH'].forEach(id => document.getElementById(id).addEventListener('input', updateTotals));
+
   addRow();
+  document.getElementById('estAddRow').addEventListener('click', () => addRow());
 
-  document.getElementById('skuAddRow').addEventListener('click', () => addRow());
-  document.getElementById('skuClearAll').addEventListener('click', () => { document.getElementById('skuCartBody').innerHTML = ''; addRow(); });
-
-  document.getElementById('skuRunPreview').addEventListener('click', async () => {
-    const btn = document.getElementById('skuRunPreview'), pOut = document.getElementById('pOut');
+  document.getElementById('estRunBtn').addEventListener('click', async () => {
+    const btn  = document.getElementById('estRunBtn');
+    const reEl = document.getElementById('estResults');
+    const out  = document.getElementById('estOut');
+    const cc   = (document.getElementById('estCountry').value.trim() || 'US').toUpperCase();
+    const zip  = document.getElementById('estToZip').value.trim();
     const lines = [];
-    getRows().forEach(r => {
-      const s = r.querySelector('.sku-input').value.toUpperCase().trim();
-      const q = parseInt(r.querySelector('.sku-qty-input').value) || 0;
-      const w = skuWeights[s];
-      if (w !== undefined && q > 0) lines.push({ quantity: q, trueWeightGrams: w });
+    getRows().forEach(row => {
+      const s   = row.querySelector('.est-sku-input').value.toUpperCase().trim();
+      const qty = parseInt(row.querySelector('.est-qty-input').value) || 0;
+      let wg    = skuWeights[s];
+      if (wg === undefined) wg = parseFloat(row.querySelector('.est-manual-weight').value) || 0;
+      if (qty > 0 && wg > 0) lines.push({ sku: s || undefined, quantity: qty, trueWeightGrams: wg });
     });
-    if (!lines.length) { pOut.textContent = 'No valid SKUs in cart.'; return; }
-    const cc  = document.querySelector('[name="cc"]')?.value  || 'US';
-    const zip = document.querySelector('[name="zip"]')?.value || '';
-    btn.disabled = true; btn.textContent = 'Running…'; pOut.textContent = 'Calculating…';
+    if (!lines.length) { reEl.style.display = ''; out.textContent = 'Add at least one SKU with a valid weight.'; return; }
+    btn.disabled = true; btn.textContent = 'Getting rates…';
+    reEl.style.display = ''; out.textContent = 'Calculating…';
     try {
       const data = await fetch('/shipping/api/preview', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ destination: { countryCode: cc, postalCode: zip }, lines })
       }).then(r => r.json());
-      let out = '';
+      let txt = '';
       if (data.shipment) {
         const s = data.shipment;
-        out += `── Shipment Summary ─────────────────────────────────────────────────\n`;
-        out += `  Total lines:     ${lines.length}\n`;
-        out += `  Total qty:       ${lines.reduce((a, l) => a + l.quantity, 0).toLocaleString()}\n`;
-        out += `  Net weight:      ${s.totalNetWeightLb?.toFixed(4)} lb\n`;
-        out += `  Shipment weight: ${s.totalShipmentWeightLb?.toFixed(4)} lb (incl. tare: ${s.tareLb} lb)\n\n`;
-        out += `── Line Details ───────────────────────────────────────────────────\n`;
+        const fromZip = document.getElementById('estFromZip').value.trim();
+        const L = parseFloat(document.getElementById('estBoxL').value) || 0;
+        const W = parseFloat(document.getElementById('estBoxW').value) || 0;
+        const H = parseFloat(document.getElementById('estBoxH').value) || 0;
+        txt += '── Shipment Summary ────────────────────────────────────────────────
+';
+        if (fromZip) txt += '  From:           ' + fromZip + '
+';
+        txt += '  To:             ' + (zip || '(no zip)') + ', ' + cc + '
+';
+        if (L > 0 && W > 0 && H > 0) txt += '  Box:            ' + L + ' × ' + W + ' × ' + H + ' in
+';
+        txt += '  Lines:          ' + lines.length + '
+';
+        txt += '  Total items:    ' + lines.reduce((a, l) => a + l.quantity, 0).toLocaleString() + '
+';
+        txt += '  Item weight:    ' + (s.totalItemWeightGrams?.toFixed(2) ?? '?') + ' g  (' + ((s.totalItemWeightGrams ?? 0) / 453.592).toFixed(4) + ' lb)
+';
+        txt += '  Shipment wt:    ' + (s.totalShipmentWeightGrams?.toFixed(2) ?? '?') + ' g  (' + (s.totalShipmentWeightLb?.toFixed(4) ?? '?') + ' lb)  incl. pkg factor
+';
+        txt += '
+── Line Detail ───────────────────────────────────────────────────
+';
         (s.lines || []).forEach((line, i) => {
-          const label = getRows()[i]?.querySelector('.sku-input').value || `Line ${i + 1}`;
-          out += `  ${label}: qty=${line.quantity}, ${line.trueWeightGrams}g/unit → ${line.resolvedWeightLb?.toFixed(4)} lb\n`;
+          const label = (lines[i]?.sku || ('Line ' + (i + 1))).padEnd(22);
+          txt += '  ' + label + ' qty=' + line.quantity + '  ' + line.resolvedWeightGrams + ' g/unit  →  ' + (line.resolvedWeightGrams * line.quantity).toFixed(2) + ' g total
+';
         });
       }
       if (data.rates?.length) {
-        out += `\n── Carrier Rates ─────────────────────────────────────────────────\n`;
-        data.rates.forEach(r => { out += `  ${r.carrier.toUpperCase().padEnd(8)} ${r.serviceName.padEnd(30)} $${r.amountUsd?.toFixed(2)} ${r.currency}\n`; });
+        txt += '
+── Carrier Rates ────────────────────────────────────────────────
+';
+        data.rates.forEach(r => {
+          txt += '  ' + r.carrier.toUpperCase().padEnd(8) + ' ' + r.serviceName.padEnd(34) + ' $' + (r.amountUsd?.toFixed(2) ?? '?.??') + ' ' + r.currency + '
+';
+        });
+      } else if (data.rates) {
+        txt += '
+(No rates returned — check carrier config or destination.)
+';
       }
-      pOut.textContent = out;
-    } catch (err) { pOut.textContent = 'Error: ' + err.message; }
-    finally { btn.disabled = false; btn.textContent = 'Run preview with SKU cart'; }
+      out.textContent = txt;
+    } catch (err) {
+      out.textContent = 'Error: ' + err.message;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Get Rates';
+    }
   });
 })();
-
 </script>
-
 <script>
 // ── Page router ──────────────────────────────────────────────────────────────
 (function() {
