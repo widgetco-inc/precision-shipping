@@ -22,7 +22,7 @@ export interface CarrierSettings {
 }
 
 export interface PackagingSettings {
-  defaultPackageTareLb: number;
+  packageWeightPct: number;
   expressEnvelopeMaxWeightLb: number;
   useFedexEnvelopeForExpress: boolean;
 }
@@ -60,7 +60,7 @@ export interface ShipmentLine extends CartLineInput {
 export interface Shipment {
   lines: ShipmentLine[];
   totalItemWeightGrams: number;
-  packageTareGrams: number;
+  packageWeightGrams: number;
   totalShipmentWeightGrams: number;
   totalShipmentWeightLb: number;
   destination: Destination;
