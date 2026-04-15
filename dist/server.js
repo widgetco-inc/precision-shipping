@@ -13,6 +13,7 @@ const preview_1 = __importDefault(require("./routes/preview"));
 const carrier_1 = __importDefault(require("./routes/carrier"));
 const admin_1 = __importDefault(require("./routes/admin"));
 const app = (0, express_1.default)();
+app.use((_req, res, next) => { res.setHeader('X-Robots-Tag', 'noindex, nofollow'); next(); }); // noindex
 app.set('view engine', 'ejs');
 app.set('views', [path_1.default.join(__dirname, '..', 'src', 'views'), path_1.default.join(__dirname, 'views')]);
 app.use((0, helmet_1.default)({ contentSecurityPolicy: false }));
