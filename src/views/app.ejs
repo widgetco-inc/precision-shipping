@@ -13,167 +13,179 @@
       <strong>Precision Shipping</strong>
       <p class="muted">WidgetCo custom shipping app</p>
     </div>
-    <nav>
-      <a href="#overview">Overview</a>
-      <a href="#methods">Shipping methods</a>
-      <a href="#rules">Rules</a>
-      <a href="#preview">Preview</a>
-      <a href="#weights">Weights</a>
-      <a href="#access">Access</a>
+    <nav id="pageNav">
+      <a href="#overview" class="nav-link">Overview</a>
+      <a href="#methods" class="nav-link">Shipping methods</a>
+      <a href="#rules" class="nav-link">Rules</a>
+      <a href="#preview" class="nav-link">Preview</a>
+      <a href="#weights" class="nav-link">Weights</a>
+      <a href="#access" class="nav-link">Access</a>
     </nav>
   </aside>
 
   <section class="content">
-    <header class="card hero" id="overview">
-      <div>
-        <p class="eyebrow">Signed in as</p>
-        <strong><%= admin.email %></strong>
-        <p class="muted">Only approved shipping administrators can open this app.</p>
-      </div>
-      <div class="pill">Store: widgetco-inc.myshopify.com</div>
-    </header>
 
-    <section class="grid two">
-      <article class="card">
-        <p class="eyebrow">Packaging</p>
-        <h2>Current defaults</h2>
+    <div class="page" id="page-overview">
+      <header class="card hero">
+        <div>
+          <p class="eyebrow">Signed in as</p>
+          <strong><%= admin.email %></strong>
+          <p class="muted">Only approved shipping administrators can open this app.</p>
+        </div>
+        <div class="pill">Store: widgetco-inc.myshopify.com</div>
+      </header>
+
+      <section class="grid two">
+        <article class="card">
+          <p class="eyebrow">Packaging</p>
+          <h2>Current defaults</h2>
+          <ul>
+            <li>Package weight factor: <strong>+<%= Math.round((settings.packaging.packageWeightPct - 1) * 100) %>%</strong> (factor: <%= settings.packaging.packageWeightPct %>)</li>
+            <li>FedEx envelope enabled: <strong><%= settings.packaging.useFedexEnvelopeForExpress ? 'Yes' : 'No' %></strong></li>
+            <li>Express envelope max: <strong><%= settings.packaging.expressEnvelopeMaxWeightLb %></strong> lb</li>
+          </ul>
+        </article>
+        <article class="card">
+          <p class="eyebrow">Rate engine</p>
+          <h2>How weight is calculated</h2>
+          <p>True unit weight &times; quantity &times; package weight factor, then services are filtered by your carrier rules.</p>
+        </article>
+      </section>
+    </div>
+
+    <div class="page" id="page-methods">
+      <section class="card">
+        <p class="eyebrow">Shipping methods</p>
+        <h2>Enabled services</h2>
+        <div class="carrier-groups">
+          <% Object.entries(settings.carriers).forEach(([carrier, config]) => { %>
+            <div class="carrier-box">
+              <div class="carrier-head">
+                <h4><%= carrier.toUpperCase() %></h4>
+                <span class="pill <%= config.enabled ? 'on' : 'off' %>"><%= config.enabled ? 'Enabled' : 'Disabled' %></span>
+              </div>
+              <div>
+                <% config.services.forEach(service => { %>
+                  <div class="service-row"><span class="service-name"><%= service.label %></span>
+                  <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> disabled /><span class="toggle-slider"></span></label></div>
+                <% }) %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </section>
+    </div>
+
+    <div class="page" id="page-rules">
+      <section class="card">
+        <p class="eyebrow">Rules</p>
+        <h2>Business logic summary</h2>
         <ul>
-          <li>Package weight factor: <strong>+<%= Math.round((settings.packaging.packageWeightPct - 1) * 100) %>%</strong> (factor: <%= settings.packaging.packageWeightPct %>)</li>          <li>FedEx envelope enabled: <strong><%= settings.packaging.useFedexEnvelopeForExpress ? 'Yes' : 'No' %></strong></li>
-          <li>Express envelope max: <strong><%= settings.packaging.expressEnvelopeMaxWeightLb %></strong> lb</li>
+          <li>Use true micro-weight, never rounded catalog weight, for shipment math.</li>
+          <li>USPS Ground Advantage stays under 1 lb.</li>
+          <li>USPS International Mail stays under 4 lb.</li>
+          <li>FedEx express services can use envelope logic under <%= settings.packaging.expressEnvelopeMaxWeightLb %> lb when eligible.</li>
+          <li>Everything else falls back to the enabled parcel services for the destination.</li>
         </ul>
-      </article>
-      <article class="card">
-        <p class="eyebrow">Rate engine</p>
-        <h2>How weight is calculated</h2>
-        <p>True unit weight &times; quantity &times; package weight factor, then services are filtered by your carrier rules.</p>
-      </article>
-    </section>
+      </section>
+    </div>
 
-    <section class="card" id="methods">
-      <details open>
-      <summary><p class="eyebrow">Shipping methods</p><h2>Enabled services</h2></summary>
-      <div class="carrier-groups">
-        <% Object.entries(settings.carriers).forEach(([carrier, config]) => { %>
-          <div class="carrier-box">
-            <div class="carrier-head">
-              <h4><%= carrier.toUpperCase() %></h4>
-              <span class="pill <%= config.enabled ? 'on' : 'off' %>"><%= config.enabled ? 'Enabled' : 'Disabled' %></span>
-            </div>
-            <div>
-              <% config.services.forEach(service => { %>
-                <div class="service-row"><span class="service-name"><%= service.label %></span>
-                <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> disabled /><span class="toggle-slider"></span></label></div>
-              <% }) %>
-            </div>
+    <div class="page" id="page-preview">
+      <section class="card sh-card">
+        <p class="eyebrow">Preview</p>
+        <h2>Test a shipment</h2>
+        <form id="pForm" class="preview-form">
+          <div class="grid three">
+            <label>
+              <span>Country</span>
+              <input name="cc" value="US" />
+            </label>
+            <label>
+              <span>Postal code</span>
+              <input name="zip" value="10001" />
+            </label>
+            <label>
+              <span>Quantity</span>
+              <input name="qty" type="number" value="25000" min="1" />
+            </label>
+            <label>
+              <span>True weight (grams)</span>
+              <input name="wg" type="number" step="0.0001" value="0.1" min="0.0001" />
+            </label>
           </div>
-        <% }) %>
-      </div>
-      </details>
-    </section>
+          <button class="button" type="submit">Run preview</button>
+        </form>
+        <pre id="pOut" class="output">Preview results will appear here.</pre>
+      </section>
+    </div>
 
-    <section class="card" id="rules">
-      <p class="eyebrow">Rules</p>
-      <h2>Business logic summary</h2>
-      <ul>
-        <li>Use true micro-weight, never rounded catalog weight, for shipment math.</li>
-        <li>USPS Ground Advantage stays under 1 lb.</li>
-        <li>USPS International Mail stays under 4 lb.</li>
-        <li>FedEx express services can use envelope logic under <%= settings.packaging.expressEnvelopeMaxWeightLb %> lb when eligible.</li>
-        <li>Everything else falls back to the enabled parcel services for the destination.</li>
-      </ul>
-    </section>
+    <div class="page" id="page-weights">
+      <section class="card">
+        <details open>
+        <summary><p class="eyebrow">Weights</p><h2>Variant true-weight sync</h2></summary>
+        <p class="muted">Scan every Shopify product variant and flag any whose <code>custom.actual_weight_grams</code> metafield is missing or differs &gt;20% from the Shopify catalog weight.</p>
 
-    <section class="card sh-card" id="preview">
-      <p class="eyebrow">Preview</p>
-      <h2>Test a shipment</h2>
-      <form id="pForm" class="preview-form">
-        <div class="grid three">
-          <label>
-            <span>Country</span>
-            <input name="cc" value="US" />
-          </label>
-          <label>
-            <span>Postal code</span>
-            <input name="zip" value="10001" />
-          </label>
-          <label>
-            <span>Quantity</span>
-            <input name="qty" type="number" value="25000" min="1" />
-          </label>
-          <label>
-            <span>True weight (grams)</span>
-            <input name="wg" type="number" step="0.0001" value="0.1" min="0.0001" />
-          </label>
-        </div>
-        <button class="button" type="submit">Run preview</button>
-      </form>
-      <pre id="pOut" class="output">Preview results will appear here.</pre>
-    </section>
+        <!-- Nightly alert banner -->
+        <div id="nightlyAlertBanner" style="display:none" class="alert-banner"></div>
 
-    <!-- ── Weights ──────────────────────────────────────────────────────── -->
-    <section class="card" id="weights">
-      <details open>
-      <summary><p class="eyebrow">Weights</p><h2>Variant true-weight sync</h2></summary>
-      <p class="muted">Scan every Shopify product variant and flag any whose <code>custom.actual_weight_grams</code> metafield is missing or differs &gt;20% from the Shopify catalog weight.</p>
-
-      <!-- Nightly alert banner -->
-      <div id="nightlyAlertBanner" style="display:none" class="alert-banner"></div>
-
-      <!-- CSV import -->
-      <details class="csv-import-details">
-        <summary>Import weights from CSV</summary>
-        <div class="csv-import-body">
-          <p class="muted">Upload a CSV with columns <code>sku,grams</code> (header row optional). Each row sets the <code>actual_weight_grams</code> metafield for that SKU.</p>
-          <div class="csv-upload-row">
-            <input type="file" id="csvFileInput" accept=".csv,text/csv,text/plain" />
-            <button class="button" id="csvUploadBtn" type="button">Upload &amp; Import</button>
+        <!-- CSV import -->
+        <details class="csv-import-details">
+          <summary>Import weights from CSV</summary>
+          <div class="csv-import-body">
+            <p class="muted">Upload a CSV with columns <code>sku,grams</code> (header row optional). Each row sets the <code>actual_weight_grams</code> metafield for that SKU.</p>
+            <div class="csv-upload-row">
+              <input type="file" id="csvFileInput" accept=".csv,text/csv,text/plain" />
+              <button class="button" id="csvUploadBtn" type="button">Upload &amp; Import</button>
+            </div>
+            <pre id="csvResult" class="output" style="display:none"></pre>
           </div>
-          <pre id="csvResult" class="output" style="display:none"></pre>
+        </details>
+
+        <!-- Sync toolbar -->
+        <div class="weights-toolbar">
+          <button class="button" id="syncWeightsBtn" type="button">Run sync</button>
+          <span id="syncStatus" class="muted"></span>
         </div>
-      </details>
 
-      <!-- Sync toolbar -->
-      <div class="weights-toolbar">
-        <button class="button" id="syncWeightsBtn" type="button">Run sync</button>
-        <span id="syncStatus" class="muted"></span>
-      </div>
+        <!-- SKU search -->
+        <div class="sku-search-row">
+          <input type="text" id="skuSearch" placeholder="Search SKU or product…" />
+        </div>
 
-      <!-- SKU search -->
-      <div class="sku-search-row">
-        <input type="text" id="skuSearch" placeholder="Search SKU or product…" />
-      </div>
+        <div id="syncWarnings"></div>
 
-      <div id="syncWarnings"></div>
+        <table id="weightsTable" class="weights-table" style="display:none">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Variant</th>
+              <th>SKU</th>
+              <th>Shopify (g)</th>
+              <th>True weight (g)</th>
+              <th>Status</th>
+              <th>Edit</th>
+            </tr>
+          </thead>
+          <tbody id="weightsTableBody"></tbody>
+        </table>
+        </details>
+      </section>
+    </div>
 
-      <table id="weightsTable" class="weights-table" style="display:none">
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>Variant</th>
-            <th>SKU</th>
-            <th>Shopify (g)</th>
-            <th>True weight (g)</th>
-            <th>Status</th>
-            <th>Edit</th>
-          </tr>
-        </thead>
-        <tbody id="weightsTableBody"></tbody>
-      </table>
-      </details>
-    </section>
+    <div class="page" id="page-access">
+      <section class="card">
+        <p class="eyebrow">Access</p>
+        <h2>Approved admins</h2>
+        <ul>
+          <% settings.access.allowedAdminEmails.forEach(email => { %>
+            <li><%= email %></li>
+          <% }) %>
+        </ul>
+      </section>
+    </div>
 
-    <section class="card" id="access">
-      <p class="eyebrow">Access</p>
-      <h2>Approved admins</h2>
-      <ul>
-        <% settings.access.allowedAdminEmails.forEach(email => { %>
-          <li><%= email %></li>
-        <% }) %>
-      </ul>
-    </section>
   </section>
 </main>
-
 <script>
 // ── Nightly alert banner ──────────────────────────────────────────────────────
 async function loadNightlyAlerts() {
@@ -579,6 +591,36 @@ document.getElementById('pForm').addEventListener('submit', async function (e) {
   });
 })();
 
+</script>
+
+<script>
+// ── Page router ──────────────────────────────────────────────────────────────
+(function() {
+  const PAGES = ['overview','methods','rules','preview','weights','access'];
+  const DEFAULT = 'overview';
+
+  function getPage() {
+    const hash = location.hash.replace('#','').trim();
+    return PAGES.includes(hash) ? hash : DEFAULT;
+  }
+
+  function showPage(page) {
+    PAGES.forEach(p => {
+      const el = document.getElementById('page-' + p);
+      if (el) el.style.display = (p === page) ? '' : 'none';
+    });
+    document.querySelectorAll('#pageNav .nav-link').forEach(a => {
+      const href = a.getAttribute('href').replace('#','');
+      a.classList.toggle('active', href === page);
+    });
+  }
+
+  // Initial render
+  showPage(getPage());
+
+  // Hash changes (nav clicks)
+  window.addEventListener('hashchange', () => showPage(getPage()));
+})();
 </script>
 </body>
 </html>
