@@ -14,7 +14,7 @@ const users = [
 // GET /login
 router.get('/login', (req, res) => {
     if (req.session && req.session.userEmail) {
-        return res.redirect('/shipping/preview');
+        return res.redirect('/app');
     }
     res.render('login', { error: null, prefill: '' });
 });
@@ -30,7 +30,7 @@ router.post('/login', async (req, res) => {
         return res.render('login', { error: 'Invalid email or password.', prefill: email || '' });
     }
     req.session.userEmail = user.email;
-    res.redirect('/shipping/preview');
+    res.redirect('/app');
 });
 // GET /logout
 router.get('/logout', (req, res) => {
