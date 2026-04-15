@@ -34,7 +34,7 @@ export const defaultSettings: AppSettings = {
     }
   },
   packaging: {
-    defaultPackageTareLb: 0.15,
+    packageWeightPct: 1.05,
     expressEnvelopeMaxWeightLb: 2,
     useFedexEnvelopeForExpress: true
   },
