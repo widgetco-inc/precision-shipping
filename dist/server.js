@@ -7,11 +7,13 @@ const express_1 = __importDefault(require("express"));
 const helmet_1 = __importDefault(require("helmet"));
 const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
+const session_1 = __importDefault(require("express-session"));
 const env_1 = require("./lib/env");
 const app_1 = __importDefault(require("./routes/app"));
 const preview_1 = __importDefault(require("./routes/preview"));
 const carrier_1 = __importDefault(require("./routes/carrier"));
 const admin_1 = __importDefault(require("./routes/admin"));
+const login_1 = __importDefault(require("./routes/login"));
 const app = (0, express_1.default)();
 app.use((_req, res, next) => { res.setHeader('X-Robots-Tag', 'noindex, nofollow'); next(); }); // noindex
 app.set('view engine', 'ejs');
@@ -22,6 +24,20 @@ app.use(express_1.default.json({ limit: '2mb' }));
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use(express_1.default.static(path_1.default.join(__dirname, '..', 'src', 'public')));
 app.use(express_1.default.static(path_1.default.join(__dirname, 'public')));
+// Session middleware
+app.use((0, session_1.default)({
+    secret: env_1.env.sessionSecret || 'widgetco-ship-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false, maxAge: 8 * 60 * 60 * 1000 }, // 8 hours
+}));
+// Auth middleware - require login for all non-public routes
+function requireLogin(req, res, next) {
+    if (req.session && req.session.userEmail) {
+        return next();
+    }
+    res.redirect('/login');
+}
 app.get('/health', (_req, res) => {
     res.json({ ok: true, service: 'widgetco-shipping-app' });
 });
@@ -32,11 +48,15 @@ app.get('/shipping-preview.js', (_req, res) => {
     res.set('Content-Type', 'application/javascript');
     res.sendFile(path_1.default.join(__dirname, '..', 'src', 'public', 'shipping-preview.js'));
 });
+// Login routes (public - no auth required)
+app.use(login_1.default);
+// Protected routes - require login
+app.use(requireLogin);
 app.use(app_1.default);
 app.use(preview_1.default);
 app.use(carrier_1.default);
 app.use(admin_1.default);
-app.get('/', (_req, res) => res.redirect('/app'));
+app.get('/', (_req, res) => res.redirect('/shipping/preview'));
 app.listen(env_1.env.port, () => {
     console.log(`WidgetCo shipping app listening on port ${env_1.env.port}`);
 });
