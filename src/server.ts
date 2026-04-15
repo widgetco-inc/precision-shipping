@@ -12,6 +12,7 @@ import adminRoutes from './routes/admin';
 import weightsRoutes from './routes/weights';
 
 const app = express();
+app.use((_req, res, next) => { res.setHeader('X-Robots-Tag', 'noindex, nofollow'); next(); }); // noindex
 const START_TIME = Date.now();
 
 app.set('view engine', 'ejs');
