@@ -13,6 +13,7 @@ const app_1 = __importDefault(require("./routes/app"));
 const preview_1 = __importDefault(require("./routes/preview"));
 const carrier_1 = __importDefault(require("./routes/carrier"));
 const admin_1 = __importDefault(require("./routes/admin"));
+const weights_1 = __importDefault(require("./routes/weights"));
 const login_1 = __importDefault(require("./routes/login"));
 const app = (0, express_1.default)();
 app.use((_req, res, next) => { res.setHeader('X-Robots-Tag', 'noindex, nofollow'); next(); }); // noindex
@@ -57,6 +58,7 @@ app.use(preview_1.default);
 app.use(carrier_1.default);
 app.use(admin_1.default);
 app.get('/', (_req, res) => res.redirect('/shipping/preview'));
+app.use(weights_1.default);
 app.listen(env_1.env.port, () => {
     console.log(`WidgetCo shipping app listening on port ${env_1.env.port}`);
 });
