@@ -189,10 +189,15 @@ export async function runWeightSync(): Promise<SyncResult> {
 // ─── CSV bulk import ──────────────────────────────────────────────────────────
 
 /**
- * Parses a CSV string with columns sku,grams (header row optional).
+ * Parses a CSV string and returns SKU+grams entries.
+ *
+ * Supported formats:
+ *  1. Simple:    sku,grams  (header row optional; also accepts weight_grams as column name)
+ *  2. Matrixify: ID,"Variant SKU","Metafield: custom.actual_weight_grams [single_line_text_field]"
+ *     (header row required; column order is determined by header names, not position)
+ *
  * Looks up each SKU in Shopify to find the variant ID, then sets the
  * actual_weight_grams metafield.  Unknown SKUs are reported as errors.
- * Accepts both "sku,grams" and "sku,weight_grams" header variants.
  */
 export async function bulkImportFromCsv(csvText: string): Promise<CsvImportResult> {
   const result: CsvImportResult = { attempted: 0, succeeded: 0, skipped: 0, errors: [] };
@@ -205,18 +210,61 @@ export async function bulkImportFromCsv(csvText: string): Promise<CsvImportResul
 
   if (rows.length === 0) return result;
 
-  // Detect and skip header row
-  const firstRow = rows[0].toLowerCase();
-  const startIdx = (firstRow.startsWith('sku') || firstRow.startsWith('"sku')) ? 1 : 0;
+  // Helper: split a CSV row respecting quoted fields
+  function splitCsvRow(row: string): string[] {
+    const result: string[] = [];
+    let current = '';
+    let inQuote = false;
+    for (let i = 0; i < row.length; i++) {
+      const ch = row[i];
+      if (ch === '"') {
+        inQuote = !inQuote;
+      } else if (ch === ',' && !inQuote) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  }
+
+  // Detect header row and determine column indices
+  const headerCols = splitCsvRow(rows[0]).map(h => h.toLowerCase());
+  let skuCol = -1;
+  let gramsCol = -1;
+  let startIdx = 0;
+
+  // Check for Matrixify-style header (contains "variant sku")
+  const skuHeaderIdx = headerCols.findIndex(h => h === 'variant sku');
+  const gramsHeaderIdx = headerCols.findIndex(h => h.includes('actual_weight_grams'));
+
+  if (skuHeaderIdx !== -1 && gramsHeaderIdx !== -1) {
+    // Matrixify format — header present, columns located by name
+    skuCol = skuHeaderIdx;
+    gramsCol = gramsHeaderIdx;
+    startIdx = 1;
+  } else if (headerCols[0] === 'sku' || headerCols[0] === '"sku') {
+    // Simple format with header row (sku,grams or sku,weight_grams)
+    skuCol = 0;
+    gramsCol = 1;
+    startIdx = 1;
+  } else {
+    // No header row — assume simple sku,grams positional format
+    skuCol = 0;
+    gramsCol = 1;
+    startIdx = 0;
+  }
 
   const entries: Array<{ sku: string; grams: number }> = [];
   for (let i = startIdx; i < rows.length; i++) {
-    const parts = rows[i].split(',').map(p => p.replace(/^"|"$/g, '').trim());
-    if (parts.length < 2) continue;
-    const sku = parts[0];
-    const grams = parseFloat(parts[1]);
+    const parts = splitCsvRow(rows[i]);
+    if (parts.length <= Math.max(skuCol, gramsCol)) continue;
+    const sku = parts[skuCol];
+    const grams = parseFloat(parts[gramsCol]);
     if (!sku || isNaN(grams) || grams <= 0) {
-      result.errors.push({ sku: sku || '(empty)', reason: `Invalid grams value: ${parts[1]}` });
+      result.errors.push({ sku: sku || '(empty)', reason: `Invalid grams value: ${parts[gramsCol]}` });
       result.skipped++;
       continue;
     }
