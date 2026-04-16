@@ -206,7 +206,7 @@
         <details class="csv-import-details">
           <summary>Import weights from CSV</summary>
           <div class="csv-import-body">
-            <p class="muted">Upload a CSV with columns <code>sku,grams</code> (header row optional). Each row sets the <code>actual_weight_grams</code> metafield for that SKU.</p>
+            <p class="muted">Upload a CSV exported from Shopify (Matrixify format with <code>ID</code>, <code>Variant SKU</code>, and <code>Metafield: custom.actual_weight_grams</code> columns is supported), or use a simple two-column <code>sku,grams</code> format. Each row sets the <code>actual_weight_grams</code> metafield for that SKU.</p>
             <div class="csv-upload-row">
               <input type="file" id="csvFileInput" accept=".csv,text/csv,text/plain" />
               <button class="button" id="csvUploadBtn" type="button">Upload &amp; Import</button>
