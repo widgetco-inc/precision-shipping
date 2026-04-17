@@ -1,0 +1,9 @@
+{
+    "lastSyncedAt": null,
+    "source": "seed - will be overwritten by sync-shopify-zones workflow on first run",
+    "countries": [
+          { "code": "US", "name": "United States" },
+          { "code": "CA", "name": "Canada" },
+          { "code": "GB", "name": "United Kingdom" }
+    ]
+}
