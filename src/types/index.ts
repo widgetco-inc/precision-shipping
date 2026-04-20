@@ -14,6 +14,7 @@ export interface ServiceRule {
   handlingFeeUsd?: number;
   flatRateUsd?: number;
   freeThresholdUsd?: number;
+  shipperAccount?: 'K' | 'F';
 }
 
 export interface CarrierSettings {
