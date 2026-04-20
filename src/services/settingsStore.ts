@@ -13,7 +13,22 @@ function ensureStore(): void {
 
 export function getSettings(): AppSettings {
   ensureStore();
-  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as AppSettings;
+  const settings = JSON.parse(fs.readFileSync(filePath, 'utf8')) as AppSettings;
+  return migrateMissingServices(settings);
+}
+function migrateMissingServices(settings: AppSettings): AppSettings {
+  let mutated = false;
+  const carriers = Object.keys(defaultSettings.carriers) as Array<keyof typeof defaultSettings.carriers>;
+  for (const carrier of carriers) {
+    const defaults = defaultSettings.carriers[carrier].services;
+    const current = settings.carriers[carrier].services;
+    const existing = new Set(current.map((s) => s.code));
+    for (const def of defaults) {
+      if (!existing.has(def.code)) { current.push(def); mutated = true; }
+    }
+  }
+  if (mutated) fs.writeFileSync(filePath, JSON.stringify(settings, null, 2));
+  return settings;
 }
 
 export function saveSettings(settings: AppSettings): AppSettings {

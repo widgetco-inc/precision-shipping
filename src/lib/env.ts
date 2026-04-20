@@ -37,6 +37,7 @@ export const env = {
   upsClientId:     process.env.UPS_CLIENT_ID ?? '',
   upsClientSecret: process.env.UPS_CLIENT_SECRET ?? '',
   upsAccountNumber: process.env.UPS_ACCOUNT_NUMBER ?? '',
+  upsFAccountNumber: process.env.UPS_F_ACCOUNT_NUMBER ?? '',
 
   // USPS
   uspsClientId:     process.env.USPS_CLIENT_ID ?? '',
