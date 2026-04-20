@@ -28,6 +28,8 @@ async function getToken(): Promise<string> {
 const UPS_SERVICE_CODE: Record<string, string> = {
   GROUND:          '03',
   GROUND_SAVER:    '92',
+  GROUND_SAVER_LIGHT: '92',
+  GROUND_SAVER_HEAVY: '92',
   SECOND_DAY_AIR:  '02',
   NEXT_DAY_AIR:    '01',
 };
@@ -35,20 +37,22 @@ const UPS_SERVICE_CODE: Record<string, string> = {
 async function fetchUPSRate(
   serviceCode: string,
   shipment: Shipment,
-  token: string
+  token: string,
+  shipperAccount: 'K' | 'F' = 'K'
 ): Promise<number | null> {
   const upsCode = UPS_SERVICE_CODE[serviceCode];
   if (!upsCode) return null;
 
   const weightLb = Math.max(shipment.totalShipmentWeightLb, 0.1).toFixed(2);
   const dest = shipment.destination;
+  const shipperNumber = shipperAccount === 'F' ? env.upsFAccountNumber : env.upsAccountNumber;
 
   const body = {
     RateRequest: {
       Request: { RequestOption: 'Rate' },
       Shipment: {
         Shipper: {
-          ShipperNumber: env.upsAccountNumber,
+          ShipperNumber: shipperNumber,
           Address: {
             AddressLine: [env.originAddress],
             City: env.originCity,
@@ -131,7 +135,7 @@ export class UpsAdapter implements CarrierAdapter {
       if (!svc.enabled) return false;
       if (svc.domesticOnly && !shipment.isDomestic) return false;
       // For HI/AK don't show Ground Saver
-      if (shipment.isHiAkTerritory && svc.code === 'GROUND_SAVER') return false;
+      if (shipment.isHiAkTerritory && ['GROUND_SAVER', 'GROUND_SAVER_LIGHT', 'GROUND_SAVER_HEAVY'].includes(svc.code) return false;
       if (svc.maxWeightLb != null && shipment.totalShipmentWeightLb > svc.maxWeightLb) return false;
       if (svc.minWeightLb != null && shipment.totalShipmentWeightLb < svc.minWeightLb) return false;
       return true;
@@ -140,7 +144,7 @@ export class UpsAdapter implements CarrierAdapter {
     const quotes: RateQuote[] = [];
     for (const svc of eligible) {
       try {
-        const rate = await fetchUPSRate(svc.code, shipment, token);
+        const rate = await fetchUPSRate(svc.code, shipment, token, svc.shipperAccount);
         if (rate == null) continue;
         const total = rate + (svc.handlingFeeUsd ?? 0);
         quotes.push({
