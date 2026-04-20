@@ -145,7 +145,7 @@
             </label>
             <label class="est-label">
               <span class="est-label-text">To Country</span>
-              <input id="estCountry" type="text" placeholder="e.g. US" value="US" maxlength="3" />
+              <% const __priority = ['US','CA','GB']; const __byCode = new Map((countries.countries||[]).map(c=>[c.code,c])); const __priorityList = __priority.map(c=>__byCode.get(c)).filter(Boolean); const __priorityCodes = new Set(__priorityList.map(c=>c.code)); const __rest = (countries.countries||[]).filter(c=>!__priorityCodes.has(c.code)).slice().sort((a,b)=>a.name.localeCompare(b.name)); %><select id="estCountry"><% __priorityList.forEach((c,i)=>{ %><option value="<%= c.code %>"<%= i===0?' selected':'' %>><%= c.name %></option><% }); %><% if (__priorityList.length && __rest.length){ %><option disabled>──────────</option><% } %><% __rest.forEach(c=>{ %><option value="<%= c.code %>"><%= c.name %></option><% }); %></select>
             </label>
           </div>
         </div>
