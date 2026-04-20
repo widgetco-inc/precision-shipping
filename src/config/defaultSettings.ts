@@ -29,7 +29,9 @@ export const defaultSettings: AppSettings = {
       services: [
         { code: 'GROUND', label: 'UPS Ground', enabled: true, domesticOnly: true },
         { code: 'SECOND_DAY_AIR', label: 'UPS 2-day', enabled: true, domesticOnly: true, maxWeightLb: 20 },
-        { code: 'GROUND_SAVER', label: 'UPS Ground Saver', enabled: true, domesticOnly: true }
+        { code: 'GROUND_SAVER', label: 'UPS Ground Saver', enabled: true, domesticOnly: true },
+        { code: 'GROUND_SAVER_LIGHT', label: 'UPS Ground Saver (<1 lb)', enabled: true, domesticOnly: true, maxWeightLb: 0.999, shipperAccount: 'F' },
+        { code: 'GROUND_SAVER_HEAVY', label: 'UPS Ground Saver (1 lb+)', enabled: true, domesticOnly: true, minWeightLb: 1, shipperAccount: 'F' }
       ]
     }
   },
