@@ -14,6 +14,7 @@ function ensureStore(): void {
 export function getSettings(): AppSettings {
   ensureStore();
   const settings = JSON.parse(fs.readFileSync(filePath, 'utf8')) as AppSettings;
+    console.log('[settingsStore] getSettings file=' + filePath + ' ups_codes=' + settings.carriers.ups.services.map(s => s.code).join(','));
   return migrateMissingServices(settings);
 }
 function migrateMissingServices(settings: AppSettings): AppSettings {
@@ -24,9 +25,9 @@ function migrateMissingServices(settings: AppSettings): AppSettings {
     const current = settings.carriers[carrier].services;
     const existing = new Set(current.map((s) => s.code));
     for (const def of defaults) {
-      if (!existing.has(def.code)) { current.push(def); mutated = true; }
-    }
+      if (!existing.has(def.code)) { current.push(def); mutated = true; console.log('[settingsStore] migrated: ' + carrier + '.' + def.code); }    
   }
+}
   if (mutated) fs.writeFileSync(filePath, JSON.stringify(settings, null, 2));
   return settings;
 }
