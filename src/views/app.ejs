@@ -596,14 +596,9 @@ loadUploadedWeightsTable();
 (async function initEstimator() {
   const skuWeights = {}, skuList = [];
   try {
-    const html = await fetch('/shipping/sku-weights').then(r => r.text());
-    const doc  = new DOMParser().parseFromString(html, 'text/html');
-    doc.querySelectorAll('tbody tr').forEach(row => {
-      const cells = row.querySelectorAll('td');
-      if (cells.length < 3) return;
-      const sku = cells[0].textContent.trim();
-      const wg  = parseFloat(cells[2].querySelector('input')?.value);
-      if (sku && !isNaN(wg)) { skuWeights[sku.toUpperCase()] = wg; skuList.push(sku); }
+    const data = await fetch('/api/weights/uploaded').then(r => r.json());
+    Object.entries(data).forEach(([sku, wg]) => {
+      if (sku && typeof wg === 'number') { skuWeights[sku.toUpperCase()] = wg; skuList.push(sku); }
     });
   } catch (_) {}
 
