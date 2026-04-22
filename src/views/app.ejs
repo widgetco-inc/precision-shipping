@@ -290,6 +290,7 @@
               <th>Uploaded Weight (g)</th>
               <th>Shopify Weight (g)</th>
               <th>Status</th>
+              <th>Remove</th>
             </tr>
           </thead>
           <tbody id="uploadedWeightsTableBody"></tbody>
@@ -546,6 +547,7 @@ async function loadUploadedWeightsTable() {
       '<td>' + uploaded + ' g</td>' +
       '<td>' + (shopify !== null ? shopify + ' g' : '<span class=\"muted\">\u2014</span>') + '</td>' +
       '<td style="font-size:18px;text-align:center">' + statusHtml + '</td>' +
+      '<td style="text-align:center"><button class="btn-remove-sku" type="button" data-sku="' + escHtml(sku) + '" title="Remove discontinued SKU" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:3px 7px;border-radius:6px;line-height:1">&#10007;</button></td>' +
       '</tr>';
   });
 
@@ -564,6 +566,21 @@ function applyUploadedSkuFilter() {
 }
 
 document.getElementById('uploadedSkuSearch')?.addEventListener('input', applyUploadedSkuFilter);
+
+document.getElementById('uploadedWeightsTableBody')?.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.btn-remove-sku');
+  if (!btn) return;
+  const sku = btn.dataset.sku;
+  if (!sku || !confirm('Remove "' + sku + '" from the uploaded weights list?')) return;
+  btn.disabled = true;
+  const res = await fetch('/api/weights/uploaded/' + encodeURIComponent(sku), { method: 'DELETE' });
+  if (!res.ok) { alert('Failed to remove SKU.'); btn.disabled = false; return; }
+  btn.closest('tr').remove();
+  if (!document.querySelector('#uploadedWeightsTableBody tr')) {
+    document.getElementById('uploadedWeightsTable').style.display = 'none';
+    document.getElementById('uploadedWeightsEmpty').style.display = '';
+  }
+});
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 loadSyncStatus();
