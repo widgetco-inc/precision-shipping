@@ -77,7 +77,7 @@ router.get('/api/weights/alerts', requireApprovedAdmin, (_req, res) => {
 // Updates the true-weight metafield for a single variant.
 // Body: { grams: number }
 router.patch('/api/weights/:variantId', requireApprovedAdmin, async (req, res) => {
-  const { variantId } = req.params;
+  const variantId = String(req.params.variantId || '');
   const grams = Number(req.body?.grams);
 
   if (!variantId || isNaN(grams) || grams < 0) {
