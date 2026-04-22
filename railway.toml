@@ -1,7 +1,7 @@
 [build]
-buildCommand = "npm install --omit=dev"
+buildCommand = "npm install"
 
 [deploy]
-startCommand = "node -e \"const fs=require('fs');try{fs.copyFileSync('src/views/app.ejs','dist/views/app.ejs');fs.copyFileSync('src/public/shipping-preview.js','dist/public/shipping-preview.js');console.log('Files copied OK');}catch(e){console.error('Copy failed:',e.message);}\" && node dist/server.js"
+startCommand = "mkdir -p dist/views dist/public && npx tsc -p tsconfig.json && cp -R src/views/. dist/views/ && cp -R src/public/. dist/public/ && node dist/server.js"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
