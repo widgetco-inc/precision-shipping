@@ -135,7 +135,7 @@ export class UpsAdapter implements CarrierAdapter {
       if (!svc.enabled) return false;
       if (svc.domesticOnly && !shipment.isDomestic) return false;
       // For HI/AK don't show Ground Saver
-      if (shipment.isHiAkTerritory && ['GROUND_SAVER', 'GROUND_SAVER_LIGHT', 'GROUND_SAVER_HEAVY'].includes(svc.code) return false;
+      if (shipment.isHiAkTerritory && ['GROUND_SAVER', 'GROUND_SAVER_LIGHT', 'GROUND_SAVER_HEAVY'].includes(svc.code)) return false;
       if (svc.maxWeightLb != null && shipment.totalShipmentWeightLb > svc.maxWeightLb) return false;
       if (svc.minWeightLb != null && shipment.totalShipmentWeightLb < svc.minWeightLb) return false;
       return true;
