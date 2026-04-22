@@ -26,26 +26,33 @@ async function getToken(): Promise<string> {
 
 // UPS service codes
 const UPS_SERVICE_CODE: Record<string, string> = {
-  GROUND:          '03',
-  GROUND_SAVER:    '92',
-  GROUND_SAVER_LIGHT: '92',
-  GROUND_SAVER_HEAVY: '92',
-  SECOND_DAY_AIR:  '02',
-  NEXT_DAY_AIR:    '01',
+  GROUND:              '03',
+  GROUND_SAVER:        '92',
+  GROUND_SAVER_LIGHT:  '92',
+  GROUND_SAVER_HEAVY:  '92',
+  SECOND_DAY_AIR:      '02',
+  NEXT_DAY_AIR:        '01',
 };
+
+// Route each service code to the correct shipper account number
+function accountForService(serviceCode: string): string {
+  if (serviceCode === 'GROUND')                                               return env.upsGroundAccount;
+  if (serviceCode === 'SECOND_DAY_AIR')                                       return env.ups2DayAccount;
+  if (['GROUND_SAVER', 'GROUND_SAVER_LIGHT', 'GROUND_SAVER_HEAVY'].includes(serviceCode)) return env.upsGroundSaverAccount;
+  return env.upsGroundAccount; // fallback
+}
 
 async function fetchUPSRate(
   serviceCode: string,
   shipment: Shipment,
   token: string,
-  shipperAccount: 'K' | 'F' = 'K'
+  shipperNumber: string,
 ): Promise<number | null> {
   const upsCode = UPS_SERVICE_CODE[serviceCode];
   if (!upsCode) return null;
 
   const weightLb = Math.max(shipment.totalShipmentWeightLb, 0.1).toFixed(2);
   const dest = shipment.destination;
-  const shipperNumber = shipperAccount === 'F' ? env.upsFAccountNumber : env.upsAccountNumber;
 
   const body = {
     RateRequest: {
@@ -101,7 +108,7 @@ async function fetchUPSRate(
   });
 
   if (!resp.ok) {
-    console.warn(`[ups] Rate request failed for ${serviceCode}: ${resp.status}`);
+    console.warn(`[ups] Rate request failed for ${serviceCode} (acct ${shipperNumber.slice(0,2)}**): ${resp.status}`);
     return null;
   }
 
@@ -115,12 +122,12 @@ export class UpsAdapter implements CarrierAdapter {
     const settings = getSettings().carriers.ups;
     if (!settings.enabled) return [];
 
-    if (!env.upsClientId || !env.upsClientSecret || !env.upsAccountNumber) {
-      console.warn('[ups] Missing credentials — skipping live rates');
+    if (!env.upsClientId || !env.upsClientSecret) {
+      console.warn('[ups] Missing OAuth credentials — skipping live rates');
       return [];
     }
 
-    // UPS domestic only (international handled by FedEx in this app)
+    // UPS domestic only
     if (!shipment.isDomestic) return [];
 
     let token: string;
@@ -143,8 +150,13 @@ export class UpsAdapter implements CarrierAdapter {
 
     const quotes: RateQuote[] = [];
     for (const svc of eligible) {
+      const shipperNumber = accountForService(svc.code);
+      if (!shipperNumber) {
+        console.warn(`[ups] No account number configured for service ${svc.code} — skipping`);
+        continue;
+      }
       try {
-        const rate = await fetchUPSRate(svc.code, shipment, token, svc.shipperAccount);
+        const rate = await fetchUPSRate(svc.code, shipment, token, shipperNumber);
         if (rate == null) continue;
         const total = rate + (svc.handlingFeeUsd ?? 0);
         quotes.push({
@@ -156,6 +168,7 @@ export class UpsAdapter implements CarrierAdapter {
           debug: [
             `weightLb=${shipment.totalShipmentWeightLb.toFixed(3)}`,
             `service=${svc.code}`,
+            `acct=${shipperNumber.slice(0,2)}**`,
             'rateSource=ups-live',
           ],
         });
