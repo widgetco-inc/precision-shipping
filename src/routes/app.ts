@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { requireApprovedAdmin } from './auth';
 import { getSettings, saveSettings } from '../services/settingsStore';
+import { env } from '../lib/env';
 import { z } from 'zod';
 
 const router = Router();
 
 router.get('/app', requireApprovedAdmin, (_req, res) => {
-  res.render('app', { settings: getSettings(), admin: res.locals.admin });
+      res.render('app', { settings: getSettings(), admin: res.locals.admin, fedexAccountNumber: env.fedexAccountNumber, upsAccountNumber: env.upsAccountNumber, upsFAccountNumber: env.upsFAccountNumber, uspsAccountNumber: env.uspsAccountNumber });
 });
 
 router.get('/api/settings', requireApprovedAdmin, (_req, res) => {
