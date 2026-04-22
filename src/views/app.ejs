@@ -99,7 +99,7 @@
           <% Object.entries(settings.carriers).forEach(([carrier, config]) => { %>
             <div class="carrier-box">
               <div class="carrier-head">
-                <h4><%= carrier.toUpperCase() %></h4>
+              <h4><%= carrier.toUpperCase().replace('_', '-') %></h4>
                 <span class="pill <%= config.enabled ? 'on' : 'off' %>"><%= config.enabled ? 'Enabled' : 'Disabled' %></span>
               </div>
               <div>
