@@ -85,6 +85,14 @@ export function loadUploadedWeights(): Record<string, number> {
     return {};
 }
 
+export function deleteUploadedWeight(sku: string): boolean {
+    const weights = loadUploadedWeights();
+    if (!Object.prototype.hasOwnProperty.call(weights, sku)) return false;
+    delete weights[sku];
+    persistUploadedWeights(weights);
+    return true;
+}
+
 function persistUploadedWeights(weights: Record<string, number>): void {
     try {
           if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
