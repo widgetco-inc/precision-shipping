@@ -29,6 +29,7 @@ app.use(cors({
     // Allow same-origin (no Origin header) and the known dashboard host
     const allowed = [
       'https://apps.widgetco.com',
+      'https://ship.widgetco.com',
       'https://widgetco.com',
     ];
     if (!origin || allowed.includes(origin)) return cb(null, true);
