@@ -8,8 +8,8 @@ import {
     bulkImportFromCsv,
     getLastNightlyAlert,
     scheduleNightlyAlert,
-    loadUploadedWeights,
-    deleteUploadedWeight,
+    loadUploadedWeightsAsync,
+    deleteUploadedWeightAsync,
 } from '../services/weightSync';
 
 const router = Router();
@@ -20,8 +20,9 @@ router.get('/api/weights/sync-status', requireApprovedAdmin, (_req, res) => {
     res.json({ inProgress: isSyncInProgress(), result: getLastSyncResult() });
 });
 
-router.get('/api/weights/uploaded', requireApprovedAdmin, (_req, res) => {
-    res.json(loadUploadedWeights());
+router.get('/api/weights/uploaded', requireApprovedAdmin, async (_req, res) => {
+    const weights = await loadUploadedWeightsAsync();
+    res.json(weights);
 });
 
 router.post('/api/weights/sync', requireApprovedAdmin, (_req, res) => {
@@ -48,10 +49,10 @@ router.get('/api/weights/alerts', requireApprovedAdmin, (_req, res) => {
     res.json({ alert: getLastNightlyAlert() });
 });
 
-router.delete('/api/weights/uploaded/:sku', requireApprovedAdmin, (req, res) => {
+router.delete('/api/weights/uploaded/:sku', requireApprovedAdmin, async (req, res) => {
     const sku = decodeURIComponent(String(req.params.sku || ''));
     if (!sku) { res.status(400).json({ error: 'sku param required' }); return; }
-    const removed = deleteUploadedWeight(sku);
+    const removed = await deleteUploadedWeightAsync(sku);
     if (!removed) { res.status(404).json({ error: 'SKU not found' }); return; }
     res.json({ ok: true, sku });
 });
