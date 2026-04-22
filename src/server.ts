@@ -32,7 +32,7 @@ app.use(cors({
       'https://ship.widgetco.com',
       'https://widgetco.com',
     ];
-    if (!origin || allowed.includes(origin)) return cb(null, true);
+            if (!origin || origin === 'null' || allowed.includes(origin)) return cb(null, true);
     cb(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
