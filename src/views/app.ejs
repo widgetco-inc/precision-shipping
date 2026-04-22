@@ -96,7 +96,7 @@
         <p class="eyebrow">Shipping methods</p>
         <h2>Enabled services</h2>
         <div class="carrier-groups">
-          <% Object.entries(settings.carriers).forEach(([carrier, config]) => { %>
+                  <% Object.entries(settings.carriers).filter(([c]) => c !== 'ups_f').forEach(([carrier, config]) => { %>
             <div class="carrier-box">
               <div class="carrier-head">
               <h4><%= carrier.toUpperCase().replace('_', '-') %></h4>
@@ -107,6 +107,10 @@
                   <div class="service-row"><span class="service-name"><%= service.label %></span>
                   <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> disabled /><span class="toggle-slider"></span></label></div>
                 <% }) %>
+          <% if (carrier === 'ups' && settings.carriers.ups_f) { settings.carriers.ups_f.services.forEach(service => { %>
+            <div class="service-row"><span class="service-name"><%= service.label %></span>
+            <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> disabled /><span class="slider"></span></label></div>
+          <% }) } %>
               </div>
             </div>
           <% }) %>
