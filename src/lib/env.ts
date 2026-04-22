@@ -33,11 +33,12 @@ export const env = {
   fedexClientSecret: process.env.FEDEX_CLIENT_SECRET ?? '',
   fedexAccountNumber: process.env.FEDEX_ACCOUNT_NUMBER ?? '',
 
-  // UPS
-  upsClientId:     process.env.UPS_CLIENT_ID ?? '',
-  upsClientSecret: process.env.UPS_CLIENT_SECRET ?? '',
-  upsAccountNumber: process.env.UPS_ACCOUNT_NUMBER ?? '',
-  upsFAccountNumber: process.env.UPS_F_ACCOUNT_NUMBER ?? '',
+  // UPS (shared OAuth credentials; three separate shipper account numbers)
+  upsClientId:          process.env.UPS_CLIENT_ID ?? '',
+  upsClientSecret:      process.env.UPS_CLIENT_SECRET ?? '',
+  upsGroundAccount:     process.env.UPS_GROUND_ACCOUNT ?? '',
+  ups2DayAccount:       process.env.UPS_2DAY_ACCOUNT ?? '',
+  upsGroundSaverAccount: process.env.UPS_GROUND_SAVER_ACCOUNT ?? '',
 
   // USPS
   uspsClientId:     process.env.USPS_CLIENT_ID ?? '',
