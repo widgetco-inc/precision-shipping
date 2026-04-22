@@ -1,4 +1,4 @@
-export type CarrierCode = 'fedex' | 'ups' | 'usps';
+export type CarrierCode = 'fedex' | 'ups' | 'ups_f' | 'usps';
 
 export interface ServiceRule {
   code: string;
