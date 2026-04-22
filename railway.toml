@@ -2,6 +2,6 @@
 buildCommand = "npm install"
 
 [deploy]
-startCommand = "mkdir -p dist/views dist/public && npx tsc -p tsconfig.json && cp -R src/views/. dist/views/ && cp -R src/public/. dist/public/ && node dist/server.js"
+startCommand = "mkdir -p dist/views dist/public && cp -R src/views/. dist/views/ && cp -R src/public/. dist/public/ && npx tsx src/server.ts"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
