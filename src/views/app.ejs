@@ -30,6 +30,7 @@
     .est-total-item strong { color: var(--text); margin-left: 4px; }
     .est-label { display: grid; gap: 5px; }
     .est-label-text { font-size: 12px; color: var(--muted); font-weight: 500; }
+    .acct-label { font-size: 11px; font-weight: 600; color: var(--muted); margin: 6px 0 2px; letter-spacing: .04em; }
   </style>
 </head>
 <body>
@@ -96,24 +97,41 @@
         <p class="eyebrow">Shipping methods</p>
         <h2>Enabled services</h2>
         <div class="carrier-groups">
-                  <% Object.entries(settings.carriers).filter(([c]) => c !== 'ups_f').forEach(([carrier, config]) => { %>
+        <% function mask(n){return n&&n.length>2?n.slice(0,2)+'******':n||'';} %>
+          <% Object.entries(settings.carriers).filter(([c])=>c!=='ups_f').forEach(([carrier, config]) => { %>
             <div class="carrier-box">
               <div class="carrier-head">
-              <h4><%= carrier.toUpperCase().replace('_', '-') %></h4>
+                <h4><%= carrier.toUpperCase().replace('_','-') %></h4>
                 <span class="pill <%= config.enabled ? 'on' : 'off' %>"><%= config.enabled ? 'Enabled' : 'Disabled' %></span>
               </div>
               <div>
-                <% config.services.forEach(service => { %>
-                  <div class="service-row"><span class="service-name"><%= service.label %></span>
-                  <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> disabled /><span class="toggle-slider"></span></label></div>
-                <% }) %>
-          <% if (carrier === 'ups' && settings.carriers.ups_f) { settings.carriers.ups_f.services.forEach(service => { %>
-            <div class="service-row"><span class="service-name"><%= service.label %></span>
-            <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> disabled /><span class="slider"></span></label></div>
-          <% }) } %>
+                <% if (carrier === 'ups') { %>
+                  <% var kAcct = typeof upsAccountNumber !== 'undefined' ? mask(upsAccountNumber) : ''; %>
+                  <% if (kAcct) { %><p class="acct-label"><%= kAcct %></p><% } %>
+                  <% config.services.forEach(function(service){ %>
+                    <div class="service-row"><span class="service-name"><%= service.label %></span>
+                    <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> disabled /><span class="slider"></span></label></div>
+                  <% }); %>
+                  <% if (settings.carriers.ups_f) { %>
+                    <% var fAcct = typeof upsFAccountNumber !== 'undefined' ? mask(upsFAccountNumber) : ''; %>
+                    <% if (fAcct) { %><p class="acct-label"><%= fAcct %></p><% } %>
+                    <% settings.carriers.ups_f.services.forEach(function(service){ %>
+                      <div class="service-row"><span class="service-name"><%= service.label %></span>
+                      <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> disabled /><span class="slider"></span></label></div>
+                    <% }); %>
+                  <% } %>
+                <% } else { %>
+                  <% var acctMap = {fedex: fedexAccountNumber, usps: uspsAccountNumber}; %>
+                  <% var acct = typeof acctMap[carrier] !== 'undefined' ? mask(acctMap[carrier]) : ''; %>
+                  <% if (acct) { %><p class="acct-label"><%= acct %></p><% } %>
+                  <% config.services.forEach(function(service){ %>
+                    <div class="service-row"><span class="service-name"><%= service.label %></span>
+                    <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> disabled /><span class="slider"></span></label></div>
+                  <% }); %>
+                <% } %>
               </div>
             </div>
-          <% }) %>
+          <% }); %>
         </div>
       </section>
     </div>
