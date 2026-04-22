@@ -25,6 +25,17 @@
     .est-ac { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--line); border-radius: 8px; z-index: 100; max-height: 180px; overflow-y: auto; margin-top: 2px; box-shadow: 0 8px 24px rgba(17,24,39,.12); display: none; }
     .est-ac-item { padding: 8px 12px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
     .est-ac-item:hover { background: var(--bg); }
+    .est-results-summary { margin: 16px 0 12px; }
+    .est-results-summary table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .est-results-summary td { padding: 3px 8px 3px 0; color: var(--text); vertical-align: top; }
+    .est-results-summary td:first-child { color: var(--muted); width: 140px; }
+    .est-rates-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 16px 0 8px; }
+    .est-rates-list { display: flex; flex-direction: column; gap: 7px; }
+    .est-rate-card { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+    .est-rate-carrier { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #fff; background: var(--accent); padding: 3px 7px; border-radius: 4px; white-space: nowrap; min-width: 48px; text-align: center; }
+    .est-rate-service { flex: 1; font-size: 14px; color: var(--text); }
+    .est-rate-price { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; }
+    .est-no-rates { color: var(--muted); font-size: 13px; margin-top: 8px; }
     .est-ac-wt { font-size: 11px; color: var(--pill-on-text); font-weight: 600; }
     .est-totals { display: flex; flex-wrap: wrap; gap: 20px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin-top: 16px; margin-bottom: 4px; font-size: 13px; color: var(--muted); }
     .est-total-item strong { color: var(--text); margin-left: 4px; }
@@ -221,7 +232,7 @@
 
         <div id="estResults" style="display:none">
           <p class="est-section-label" style="margin-top:20px">Preview Results</p>
-          <pre id="estOut" class="output"></pre>
+          <div id="estOut"></div>
         </div>
       </section>
     </div>
@@ -726,36 +737,43 @@ loadUploadedWeightsTable();
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ destination: { countryCode: cc, postalCode: zip }, lines })
       }).then(r => r.json());
-      let txt = '';
-      if (data.shipment) {
-        const s = data.shipment;
-        const fromZip = document.getElementById('estFromZip').value.trim();
-        const L = parseFloat(document.getElementById('estBoxL').value) || 0;
-        const W = parseFloat(document.getElementById('estBoxW').value) || 0;
-        const H = parseFloat(document.getElementById('estBoxH').value) || 0;
-        txt += '── Shipment Summary ────────────────────────────────────────────────';
-        if (fromZip) txt += '  From:           ' + fromZip + '';
-        txt += '  To:             ' + (zip || '(no zip)') + ', ' + cc + '';
-        if (L > 0 && W > 0 && H > 0) txt += '  Box:            ' + L + ' × ' + W + ' × ' + H + ' in';
-        txt += '  Lines:          ' + lines.length + '';
-        txt += '  Total items:    ' + lines.reduce((a, l) => a + l.quantity, 0).toLocaleString() + '';
-        txt += '  Item weight:    ' + (s.totalItemWeightGrams?.toFixed(2) ?? '?') + ' g  (' + ((s.totalItemWeightGrams ?? 0) / 453.592).toFixed(4) + ' lb)';
-        txt += '  Shipment wt:    ' + (s.totalShipmentWeightGrams?.toFixed(2) ?? '?') + ' g  (' + (s.totalShipmentWeightLb?.toFixed(4) ?? '?') + ' lb)  incl. pkg factor';
-        txt += '── Line Detail ───────────────────────────────────────────────────';
-        (s.lines || []).forEach((line, i) => {
-          const label = (lines[i]?.sku || ('Line ' + (i + 1))).padEnd(22);
-          txt += '  ' + label + ' qty=' + line.quantity + '  ' + line.resolvedWeightGrams + ' g/unit  →  ' + (line.resolvedWeightGrams * line.quantity).toFixed(2) + ' g total';
-        });
+      const s = data.shipment;
+      const fromZip = document.getElementById('estFromZip').value.trim();
+      const L = parseFloat(document.getElementById('estBoxL').value) || 0;
+      const W = parseFloat(document.getElementById('estBoxW').value) || 0;
+      const H = parseFloat(document.getElementById('estBoxH').value) || 0;
+      let html = '';
+
+      // Shipment summary
+      if (s) {
+        html += '<div class="est-results-summary"><table>';
+        if (fromZip) html += '<tr><td>From</td><td>' + esc(fromZip) + '</td></tr>';
+        html += '<tr><td>To</td><td>' + esc((zip || '—') + ', ' + cc) + '</td></tr>';
+        if (L > 0 && W > 0 && H > 0) html += '<tr><td>Box</td><td>' + L + ' × ' + W + ' × ' + H + ' in</td></tr>';
+        html += '<tr><td>Items</td><td>' + lines.reduce((a, l) => a + l.quantity, 0).toLocaleString() + '</td></tr>';
+        html += '<tr><td>Item weight</td><td>' + (s.totalItemWeightGrams?.toFixed(2) ?? '—') + ' g (' + ((s.totalItemWeightGrams ?? 0) / 453.592).toFixed(4) + ' lb)</td></tr>';
+        html += '<tr><td>Shipment wt</td><td>' + (s.totalShipmentWeightGrams?.toFixed(2) ?? '—') + ' g (' + (s.totalShipmentWeightLb?.toFixed(4) ?? '—') + ' lb)</td></tr>';
+        html += '</table></div>';
       }
-      if (data.rates?.length) {
-        txt += '── Carrier Rates ────────────────────────────────────────────────';
-        data.rates.forEach(r => {
-          txt += '  ' + r.carrier.toUpperCase().padEnd(8) + ' ' + r.serviceName.padEnd(34) + ' $' + (r.amountUsd?.toFixed(2) ?? '?.??') + ' ' + r.currency + '';
+
+      // Rate cards
+      if (data.rates && data.rates.length) {
+        html += '<div class="est-rates-label">Carrier Rates</div>';
+        html += '<div class="est-rates-list">';
+        data.rates.forEach(function(r) {
+          const price = r.amountUsd != null ? '$' + r.amountUsd.toFixed(2) : '—';
+          html += '<div class="est-rate-card">';
+          html += '<span class="est-rate-carrier">' + esc(r.carrier.toUpperCase()) + '</span>';
+          html += '<span class="est-rate-service">' + esc(r.serviceName || r.service || '') + '</span>';
+          html += '<span class="est-rate-price">' + esc(price) + '</span>';
+          html += '</div>';
         });
+        html += '</div>';
       } else if (data.rates) {
-        txt += '(No rates returned — check carrier config or destination.)';
+        html += '<div class="est-no-rates">No rates returned — check carrier credentials or destination.</div>';
       }
-      out.textContent = txt;
+
+      out.innerHTML = html;
     } catch (err) {
       out.textContent = 'Error: ' + err.message;
     } finally {
