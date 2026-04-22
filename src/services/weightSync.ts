@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { shopifyGraphql } from '../shopify';
 import { shopifyWeightToGrams } from './catalog';
 
@@ -67,8 +69,33 @@ interface ProductVariantsResponse {
   };
 }
 
-// ─── In-memory state (Railway keeps process alive) ────────────────────────────
-let lastSyncResult: SyncResult | null = null;
+// ── Persistence ─────────────────────────────────────────────────────────────
+const DATA_DIR = path.resolve(process.cwd(), 'data');
+const SYNC_STATE_FILE = path.join(DATA_DIR, 'weightSync.json');
+
+function loadPersistedSyncResult(): SyncResult | null {
+    try {
+          if (fs.existsSync(SYNC_STATE_FILE)) {
+                  const raw = fs.readFileSync(SYNC_STATE_FILE, 'utf8');
+                  return JSON.parse(raw) as SyncResult;
+          }
+    } catch (e) {
+          console.warn('[weightSync] Could not load persisted state:', e);
+    }
+    return null;
+}
+
+function persistSyncResult(result: SyncResult): void {
+    try {
+          if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+          fs.writeFileSync(SYNC_STATE_FILE, JSON.stringify(result), 'utf8');
+    } catch (e) {
+          console.warn('[weightSync] Could not persist sync state:', e);
+    }
+}
+
+// ── In-memory state ──────────────────────────────────────────────────────────
+let lastSyncResult: SyncResult | null = loadPersistedSyncResult();
 let syncInProgress = false;
 let lastNightlyAlert: NightlyAlertResult | null = null;
 
@@ -177,6 +204,7 @@ export async function runWeightSync(): Promise<SyncResult> {
       records,
       lastRunAt: new Date().toISOString(),
     };
+        persistSyncResult(lastSyncResult);
 
     console.log(`[weightSync] Scanned ${records.length} variants: ${lastSyncResult.okCount} ok, ${warnings.length} warnings`);
     return lastSyncResult;
