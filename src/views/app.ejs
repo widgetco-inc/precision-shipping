@@ -722,7 +722,7 @@ loadUploadedWeightsTable();
     btn.disabled = true; btn.textContent = 'Getting rates…';
     reEl.style.display = ''; out.textContent = 'Calculating…';
     try {
-      const data = await fetch('/shipping/api/preview', {
+      const data = await fetch('/api/preview', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ destination: { countryCode: cc, postalCode: zip }, lines })
       }).then(r => r.json());
