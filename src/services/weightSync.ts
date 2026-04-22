@@ -73,33 +73,80 @@ function persistSyncResult(result: SyncResult): void {
     }
 }
 
-export function loadUploadedWeights(): Record<string, number> {
-    try {
-          if (fs.existsSync(UPLOADED_WEIGHTS_FILE)) {
-                  const raw = fs.readFileSync(UPLOADED_WEIGHTS_FILE, 'utf8');
-                  return JSON.parse(raw) as Record<string, number>;
-          }
-    } catch (e) {
-          console.warn('[weightSync] Could not load uploaded weights:', e);
+// ── Postgres pool for uploaded weights ───────────────────────────────────────
+import { Pool } from 'pg';
+
+let _pool: Pool | null = null;
+function getPool(): Pool {
+    if (!_pool) {
+        _pool = new Pool({
+            connectionString: process.env.DATABASE_URL,
+            ssl: process.env.DATABASE_URL?.includes('localhost') ? false : { rejectUnauthorized: false },
+        });
     }
+    return _pool;
+}
+
+async function ensureWeightsTable(): Promise<void> {
+    await getPool().query(`
+        CREATE TABLE IF NOT EXISTS uploaded_weights (
+            sku TEXT PRIMARY KEY,
+            grams DOUBLE PRECISION NOT NULL,
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+    `);
+}
+
+ensureWeightsTable().catch(e => console.error('[weightSync] Could not ensure weights table:', e));
+
+export function loadUploadedWeights(): Record<string, number> {
     return {};
 }
 
-export function deleteUploadedWeight(sku: string): boolean {
-    const weights = loadUploadedWeights();
-    if (!Object.prototype.hasOwnProperty.call(weights, sku)) return false;
-    delete weights[sku];
-    persistUploadedWeights(weights);
-    return true;
+export async function loadUploadedWeightsAsync(): Promise<Record<string, number>> {
+    try {
+        await ensureWeightsTable();
+        const result = await getPool().query('SELECT sku, grams FROM uploaded_weights ORDER BY sku');
+        const map: Record<string, number> = {};
+        for (const row of result.rows) map[row.sku] = parseFloat(row.grams);
+        return map;
+    } catch (e) {
+        console.error('[weightSync] Could not load uploaded weights from DB:', e);
+        return {};
+    }
 }
 
-function persistUploadedWeights(weights: Record<string, number>): void {
+export async function saveUploadedWeightsAsync(weights: Record<string, number>): Promise<void> {
+    await ensureWeightsTable();
+    const pool = getPool();
+    const client = await pool.connect();
     try {
-          if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-          fs.writeFileSync(UPLOADED_WEIGHTS_FILE, JSON.stringify(weights), 'utf8');
+        await client.query('BEGIN');
+        for (const [sku, grams] of Object.entries(weights)) {
+            await client.query(
+                `INSERT INTO uploaded_weights (sku, grams, updated_at) VALUES ($1, $2, NOW())
+                 ON CONFLICT (sku) DO UPDATE SET grams = EXCLUDED.grams, updated_at = NOW()`,
+                [sku, grams]
+            );
+        }
+        await client.query('COMMIT');
     } catch (e) {
-          console.warn('[weightSync] Could not persist uploaded weights:', e);
+        await client.query('ROLLBACK');
+        throw e;
+    } finally {
+        client.release();
     }
+}
+
+export async function deleteUploadedWeightAsync(sku: string): Promise<boolean> {
+    await ensureWeightsTable();
+    const result = await getPool().query('DELETE FROM uploaded_weights WHERE sku = $1', [sku]);
+    return (result.rowCount ?? 0) > 0;
+}
+
+export function deleteUploadedWeight(sku: string): boolean {
+    deleteUploadedWeightAsync(sku).catch(e => console.error('[weightSync] deleteUploadedWeight error:', e));
+    return true;
 }
 
 // ── In-memory state ───────────────────────────────────────────────────────────
@@ -337,8 +384,8 @@ export async function bulkImportFromCsv(csvText: string): Promise<CsvImportResul
         result.succeeded++;
   }
 
-  // Persist to disk — no Shopify calls at all
-  persistUploadedWeights(uploadedWeights);
+  // Persist to Postgres — survives all redeploys
+  await saveUploadedWeightsAsync(uploadedWeights);
 
   // Merge uploaded weights into the current sync result for display
   if (lastSyncResult) {
