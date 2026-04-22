@@ -266,6 +266,27 @@
         </table>
         </details>
       </section>
+
+      <section class="card" id="uploadedWeightsCard" style="margin-top:16px">
+        <p class="eyebrow">Uploaded CSV Weights</p>
+        <h2>SKU weight comparison</h2>
+        <p class="muted">All SKUs imported from CSV, compared against the Shopify <code>custom.actual_weight_grams</code> metafield. A <span style="color:#16a34a">&#10003;</span> means values match; a <span style="color:#dc2626">&#10007;</span> means they differ or the metafield is missing.</p>
+        <div class="sku-search-row" style="margin-bottom:12px">
+          <input type="text" id="uploadedSkuSearch" placeholder="Filter by SKU…" />
+        </div>
+        <p id="uploadedWeightsEmpty" class="muted" style="display:none">No uploaded weights yet. Use CSV import above to add weights.</p>
+        <table id="uploadedWeightsTable" class="weights-table" style="display:none">
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Uploaded Weight (g)</th>
+              <th>Shopify Weight (g)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="uploadedWeightsTableBody"></tbody>
+        </table>
+      </section>
     </div>
 
     <div class="page" id="page-access">
@@ -453,8 +474,9 @@ document.getElementById('csvUploadBtn').addEventListener('click', async () => {
         (data.errors && data.errors.length > 0
           ? '\n\nIssues:\n' + data.errors.map(e => '  ' + e.sku + ': ' + e.reason).join('\n')
           : '');
-      // Refresh the table
+      // Refresh the tables
       loadSyncStatus();
+      loadUploadedWeightsTable();
     }
   } catch (err) {
     resultPre.textContent = 'Upload failed: ' + err.message;
@@ -464,9 +486,81 @@ document.getElementById('csvUploadBtn').addEventListener('click', async () => {
   }
 });
 
+// ── Uploaded weights table ───────────────────────────────────────────────────
+async function loadUploadedWeightsTable() {
+  const [uploadedRes, syncRes] = await Promise.allSettled([
+    fetch('/api/weights/uploaded'),
+    fetch('/api/weights/sync-status'),
+  ]);
+
+  let uploadedMap = {};
+  if (uploadedRes.status === 'fulfilled' && uploadedRes.value.ok) {
+    const d = await uploadedRes.value.json();
+    if (Array.isArray(d)) {
+      d.forEach(item => { uploadedMap[item.sku] = item.grams; });
+    } else {
+      uploadedMap = d;
+    }
+  }
+
+  let metafieldMap = {};
+  if (syncRes.status === 'fulfilled' && syncRes.value.ok) {
+    const d = await syncRes.value.json();
+    const records = (d.result && d.result.records) ? d.result.records : [];
+    records.forEach(r => {
+      if (r.sku) metafieldMap[r.sku] = r.metafieldGrams;
+    });
+  }
+
+  const skus = Object.keys(uploadedMap);
+  const empty = document.getElementById('uploadedWeightsEmpty');
+  const table = document.getElementById('uploadedWeightsTable');
+  const tbody = document.getElementById('uploadedWeightsTableBody');
+
+  if (!skus.length) {
+    empty.style.display = '';
+    table.style.display = 'none';
+    return;
+  }
+
+  empty.style.display = 'none';
+  const rows = skus.sort().map(sku => {
+    const uploaded = uploadedMap[sku];
+    const shopify  = metafieldMap.hasOwnProperty(sku) ? metafieldMap[sku] : null;
+    const match    = shopify !== null && Math.abs(uploaded - shopify) < 0.5;
+    const statusHtml = shopify === null
+      ? '<span title="No Shopify metafield found for this SKU" style="color:#f59e0b;font-size:16px">&#9900;</span>'
+      : match
+        ? '<span title="Weights match" style="color:#16a34a;font-size:16px">&#10003;</span>'
+        : '<span title="Mismatch" style="color:#dc2626;font-size:16px">&#10007;</span>';
+    return '<tr data-sku="' + escHtml(sku) + '">' +
+      '<td><code>' + escHtml(sku) + '</code></td>' +
+      '<td>' + uploaded + ' g</td>' +
+      '<td>' + (shopify !== null ? shopify + ' g' : '<span class=\"muted\">\u2014</span>') + '</td>' +
+      '<td style="font-size:18px;text-align:center">' + statusHtml + '</td>' +
+      '</tr>';
+  });
+
+  tbody.innerHTML = rows.join('');
+  table.style.display = '';
+  applyUploadedSkuFilter();
+}
+
+function applyUploadedSkuFilter() {
+  const q = (document.getElementById('uploadedSkuSearch')?.value || '').toLowerCase().trim();
+  const rows = document.querySelectorAll('#uploadedWeightsTableBody tr');
+  rows.forEach(row => {
+    if (!q) { row.style.display = ''; return; }
+    row.style.display = row.dataset.sku?.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+document.getElementById('uploadedSkuSearch')?.addEventListener('input', applyUploadedSkuFilter);
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 loadSyncStatus();
 loadNightlyAlerts();
+loadUploadedWeightsTable();
 </script>
 
 <script>
