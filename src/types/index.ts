@@ -1,4 +1,4 @@
-export type CarrierCode = 'fedex' | 'ups' | 'ups_f' | 'usps';
+export type CarrierCode = 'fedex' | 'ups' | 'ups_f' | 'ups_one_rate' | 'usps' | 'dhl_ecomm' | 'dhl_express' | 'fedex_wallet' | 'asendia';
 
 export interface ServiceRule {
   code: string;
@@ -41,15 +41,15 @@ export interface AppSettings {
 export interface Destination {
   countryCode: string;
   provinceCode?: string;
-  postalCode?: string;
+  postalCode: string;
   city?: string;
   address1?: string;
 }
 
 export interface CartLineInput {
-  variantId?: string;
-  sku?: string;
-  title?: string;
+  variantId: string;
+  sku: string;
+  title: string;
   quantity: number;
   trueWeightGrams?: number;
 }
@@ -78,5 +78,5 @@ export interface RateQuote {
   serviceName: string;
   amountUsd: number;
   currency: string;
-  debug: string[];
+  debug?: string;
 }
