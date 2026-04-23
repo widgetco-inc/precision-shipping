@@ -28,26 +28,29 @@ export const env = {
   jonathanPasswordHash: process.env.JONATHAN_PASSWORD_HASH ?? '',
   lauraPasswordHash: process.env.LAURA_PASSWORD_HASH ?? '',
 
-  // FedEx
-  fedexClientId:     process.env.FEDEX_CLIENT_ID ?? '',
+  // EasyPost (unified rate API — replaces direct FedEx/UPS/USPS credentials)
+  easypostApiKey: process.env.EASYPOST_API_KEY ?? '',
+
+  // FedEx (kept for reference / fallback if needed)
+  fedexClientId: process.env.FEDEX_CLIENT_ID ?? '',
   fedexClientSecret: process.env.FEDEX_CLIENT_SECRET ?? '',
   fedexAccountNumber: process.env.FEDEX_ACCOUNT_NUMBER ?? '',
 
-  // UPS (shared OAuth credentials; three separate shipper account numbers)
-  upsClientId:          process.env.UPS_CLIENT_ID ?? '',
-  upsClientSecret:      process.env.UPS_CLIENT_SECRET ?? '',
-  upsGroundAccount:     process.env.UPS_GROUND_ACCOUNT ?? '',
-  ups2DayAccount:       process.env.UPS_2DAY_ACCOUNT ?? '',
+  // UPS (kept for reference / fallback if needed)
+  upsClientId: process.env.UPS_CLIENT_ID ?? '',
+  upsClientSecret: process.env.UPS_CLIENT_SECRET ?? '',
+  upsGroundAccount: process.env.UPS_GROUND_ACCOUNT ?? '',
+  ups2DayAccount: process.env.UPS_2DAY_ACCOUNT ?? '',
   upsGroundSaverAccount: process.env.UPS_GROUND_SAVER_ACCOUNT ?? '',
 
-  // USPS
-  uspsClientId:     process.env.USPS_CLIENT_ID ?? '',
+  // USPS (kept for reference / fallback if needed)
+  uspsClientId: process.env.USPS_CLIENT_ID ?? '',
   uspsClientSecret: process.env.USPS_CLIENT_SECRET ?? '',
   uspsAccountNumber: process.env.USPS_ACCOUNT_NUMBER ?? '',
 
   // Origin (your warehouse/ship-from address)
-  originZip:     process.env.ORIGIN_ZIP ?? '',
-  originCity:    process.env.ORIGIN_CITY ?? '',
-  originState:   process.env.ORIGIN_STATE ?? '',
+  originZip: process.env.ORIGIN_ZIP ?? '',
+  originCity: process.env.ORIGIN_CITY ?? '',
+  originState: process.env.ORIGIN_STATE ?? '',
   originAddress: process.env.ORIGIN_ADDRESS ?? '',
 };
