@@ -129,7 +129,7 @@ body {
 }
 .toggle input:checked + .toggle-slider { background: var(--pill-on); }
 .toggle input:checked + .toggle-slider::before { transform: translateX(16px); }
-.carrier-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.carrier-groups { display: grid; grid-template-columns: 1fr; gap: 14px; }
 .carrier-box { border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
 .carrier-box ul, .card ul { padding-left: 18px; }
 .carrier-box li { display: flex; justify-content: space-between; gap: 12px; margin: 8px 0; }
