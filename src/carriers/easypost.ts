@@ -6,80 +6,16 @@ import { env } from '../lib/env';
 // EasyPost carrier account IDs mapped to our carrier setting keys
 const CARRIER_ACCOUNTS: Record<string, string> = {
   // Personal carrier accounts
-  fedex:        'ca_544bae948c20483c947448953a736823',
-  ups:          'ca_5065a768022845f89a3e646a6eafa19b',
-  ups_f:        'ca_61b89a3dcdaa4c8b8acd96e595c2de91',
+  fedex: 'ca_544bae948c20483c947448953a736823',
+  ups: 'ca_5065a768022845f89a3e646a6eafa19b',
+  ups_f: 'ca_61b89a3dcdaa4c8b8acd96e595c2de91',
   ups_one_rate: 'ca_024451c3996d417fa0ecf521bbd30f82',
-  usps:         'ca_2046b502461e4ad68b6cf6c0f0f9843b',
+  usps: 'ca_2046b502461e4ad68b6cf6c0f0f9843b',
   // EasyPost Wallet carriers
-  dhl_ecomm:    'ca_0835e9c34bac49d1a0a419bfc3a6074b',
-  dhl_express:  'ca_74860ca138bf4590a299e3a9d2dd2159',
+  dhl_ecomm: 'ca_0835e9c34bac49d1a0a419bfc3a6074b',
+  dhl_express: 'ca_74860ca138bf4590a299e3a9d2dd2159',
   fedex_wallet: 'ca_36962392a6704d2389b0d2a96f843585',
-  asendia:      'ca_d998402343be4f8abcdaf281e678b9d2',
-};
-
-// Maps our internal service codes to EasyPost carrier + service names
-// For each carrier key, we map serviceCode -> { carrier: EasyPostCarrierName, service: EasyPostServiceCode }
-const SERVICE_MAP: Record<string, Record<string, { carrier: string; service: string }>> = {
-  fedex: {
-    FEDEX_GROUND:           { carrier: 'FedEx', service: 'FEDEX_GROUND' },
-    GROUND_HOME_DELIVERY:   { carrier: 'FedEx', service: 'GROUND_HOME_DELIVERY' },
-    FEDEX_2_DAY:            { carrier: 'FedEx', service: 'FEDEX_2_DAY' },
-    PRIORITY_OVERNIGHT:     { carrier: 'FedEx', service: 'PRIORITY_OVERNIGHT' },
-    STANDARD_OVERNIGHT:     { carrier: 'FedEx', service: 'STANDARD_OVERNIGHT' },
-    INTERNATIONAL_GROUND_CA:{ carrier: 'FedEx', service: 'FEDEX_GROUND' },
-    INTERNATIONAL_PRIORITY: { carrier: 'FedEx', service: 'INTERNATIONAL_PRIORITY' },
-    INTERNATIONAL_ECONOMY:  { carrier: 'FedEx', service: 'INTERNATIONAL_ECONOMY' },
-    INTERNATIONAL_CONNECT_PLUS: { carrier: 'FedEx', service: 'FEDEX_INTERNATIONAL_CONNECT_PLUS' },
-  },
-  usps: {
-    GROUND_ADVANTAGE:       { carrier: 'USPS', service: 'GroundAdvantage' },
-    PRIORITY_MAIL:          { carrier: 'USPS', service: 'Priority' },
-    PRIORITY_MAIL_EXPRESS:  { carrier: 'USPS', service: 'Express' },
-    INTERNATIONAL_MAIL:     { carrier: 'USPS', service: 'FirstClassPackageInternationalService' },
-  },
-  ups: {
-    UPS_GROUND:             { carrier: 'UPS', service: 'Ground' },
-    UPS_2ND_DAY_AIR:        { carrier: 'UPS', service: '2ndDayAir' },
-  },
-  ups_f: {
-    UPS_GROUND_SAVER_LIGHT: { carrier: 'UPS', service: 'UPSGroundSaver' },
-    UPS_GROUND_SAVER_HEAVY: { carrier: 'UPS', service: 'UPSGroundSaver' },
-  },
-  ups_one_rate: {
-    UPS_ONE_RATE_GROUND:              { carrier: 'UPS', service: 'Ground' },
-    UPS_ONE_RATE_2ND_DAY_AIR:         { carrier: 'UPS', service: '2ndDayAir' },
-    UPS_ONE_RATE_NEXT_DAY_AIR_SAVER:  { carrier: 'UPS', service: 'NextDayAirSaver' },
-    UPS_ONE_RATE_NEXT_DAY_AIR:        { carrier: 'UPS', service: 'NextDayAir' },
-  },
-  dhl_ecomm: {
-    DHLeCommerceParcelExpedited:    { carrier: 'DHLeCommerce', service: 'DHLeCommerceParcelExpedited' },
-    DHLeCommerceParcelExpeditedMax: { carrier: 'DHLeCommerce', service: 'DHLeCommerceParcelExpeditedMax' },
-    DHLeCommerceParcelGround:       { carrier: 'DHLeCommerce', service: 'DHLeCommerceParcelGround' },
-    DHLeCommerceParcelPlus:         { carrier: 'DHLeCommerce', service: 'DHLeCommerceParcelPlusExpedited' },
-    DHLeCommerceBPMExpedited:       { carrier: 'DHLeCommerce', service: 'DHLeCommerceBPMExpedited' },
-    DHLeCommerceBPMGround:          { carrier: 'DHLeCommerce', service: 'DHLeCommerceBPMGround' },
-  },
-  dhl_express: {
-    DHLExpressExpressWorldwide:        { carrier: 'DHLExpress', service: 'DHLExpressExpressWorldwide' },
-    DHLExpressExpressMidpointDelivery: { carrier: 'DHLExpress', service: 'DHLExpressExpressMidpointDelivery' },
-    DHLExpressExpressEasyNDX:          { carrier: 'DHLExpress', service: 'DHLExpressExpressEasyNDX' },
-    DHLExpressWorldwideNDX:            { carrier: 'DHLExpress', service: 'DHLExpressWorldwideNDX' },
-  },
-  fedex_wallet: {
-    FEDEX_GROUND:           { carrier: 'FedEx', service: 'FEDEX_GROUND' },
-    GROUND_HOME_DELIVERY:   { carrier: 'FedEx', service: 'GROUND_HOME_DELIVERY' },
-    FEDEX_2_DAY:            { carrier: 'FedEx', service: 'FEDEX_2_DAY' },
-    PRIORITY_OVERNIGHT:     { carrier: 'FedEx', service: 'PRIORITY_OVERNIGHT' },
-    INTERNATIONAL_PRIORITY: { carrier: 'FedEx', service: 'INTERNATIONAL_PRIORITY' },
-    INTERNATIONAL_ECONOMY:  { carrier: 'FedEx', service: 'INTERNATIONAL_ECONOMY' },
-  },
-  asendia: {
-    AsendiaUSePAQ:          { carrier: 'AsendiaUS', service: 'AsendiaUSePAQ' },
-    AsendiaUSePAQPlus:      { carrier: 'AsendiaUS', service: 'AsendiaUSePAQPlus' },
-    AsendiaUSePAQTracked:   { carrier: 'AsendiaUS', service: 'AsendiaUSePAQTracked' },
-    AsendiaUSePAQStandard:  { carrier: 'AsendiaUS', service: 'AsendiaUSePAQStandard' },
-  },
+  asendia: 'ca_d998402343be4f8abcdaf281e678b9d2',
 };
 
 // Maps our carrier key to the internal CarrierCode string used in RateQuote
@@ -91,18 +27,11 @@ function internalCarrierKey(carrierKey: string): RateQuote['carrier'] {
   return carrierKey as RateQuote['carrier'];
 }
 
-async function getEasyPostRate(
-  carrierKey: string,
-  serviceCode: string,
+// Fetch ALL rates for a given carrier account from EasyPost in a single API call
+async function fetchAllRatesForAccount(
+  accountId: string,
   shipment: Shipment,
-): Promise<number | null> {
-  const accountId = CARRIER_ACCOUNTS[carrierKey];
-  if (!accountId) return null;
-  const svcMap = SERVICE_MAP[carrierKey];
-  if (!svcMap) return null;
-  const svc = svcMap[serviceCode];
-  if (!svc) return null;
-
+): Promise<Array<{ carrier: string; service: string; rate: number }>> {
   const body = {
     shipment: {
       from_address: {
@@ -138,13 +67,14 @@ async function getEasyPostRate(
     body: JSON.stringify(body),
   });
 
-  if (!resp.ok) return null;
+  if (!resp.ok) return [];
   const data = await resp.json();
   const rates: any[] = data.rates ?? [];
-  const match = rates.find(
-    (r: any) => r.carrier === svc.carrier && r.service === svc.service,
-  );
-  return match ? parseFloat(match.rate) : null;
+  return rates.map((r: any) => ({
+    carrier: r.carrier as string,
+    service: r.service as string,
+    rate: parseFloat(r.rate),
+  }));
 }
 
 export class EasyPostAdapter implements CarrierAdapter {
@@ -152,9 +82,29 @@ export class EasyPostAdapter implements CarrierAdapter {
     const settings = getSettings();
     const quotes: RateQuote[] = [];
 
+    // Group enabled carrier keys by their EasyPost account ID so we make
+    // exactly ONE API call per account, then match all returned rates back
+    // to our service definitions.
+    const enabledCarrierKeys = Object.entries(settings.carriers)
+      .filter(([key, cfg]) => cfg.enabled && key in CARRIER_ACCOUNTS)
+      .map(([key]) => key);
+
+    // Fetch rates for all accounts in parallel
+    const ratesByCarrierKey = new Map<string, Array<{ carrier: string; service: string; rate: number }>>();
+    await Promise.all(
+      enabledCarrierKeys.map(async (carrierKey) => {
+        const accountId = CARRIER_ACCOUNTS[carrierKey];
+        const rates = await fetchAllRatesForAccount(accountId, shipment);
+        ratesByCarrierKey.set(carrierKey, rates);
+      }),
+    );
+
+    // Now iterate our service definitions and match against the fetched rates
     for (const [carrierKey, carrierSettings] of Object.entries(settings.carriers)) {
       if (!carrierSettings.enabled) continue;
       if (!(carrierKey in CARRIER_ACCOUNTS)) continue;
+
+      const epRates = ratesByCarrierKey.get(carrierKey) ?? [];
 
       for (const svc of carrierSettings.services) {
         if (!svc.enabled) continue;
@@ -168,10 +118,16 @@ export class EasyPostAdapter implements CarrierAdapter {
         if (svc.maxWeightLb != null && shipment.totalShipmentWeightLb > svc.maxWeightLb) continue;
         if (svc.minWeightLb != null && shipment.totalShipmentWeightLb < svc.minWeightLb) continue;
 
-        const amountUsd = await getEasyPostRate(carrierKey, svc.code, shipment);
-        if (amountUsd == null) continue;
+        // Find a matching rate from EasyPost's response.
+        // We match by service code (case-insensitive) since EasyPost returns
+        // the service code directly (e.g. "FEDEX_GROUND", "Ground", "Priority").
+        const match = epRates.find(
+          (r) => r.service.toLowerCase() === svc.code.toLowerCase(),
+        );
 
-        let finalAmount = amountUsd;
+        if (match == null) continue;
+
+        let finalAmount = match.rate;
         if (svc.handlingFeeUsd) finalAmount += svc.handlingFeeUsd;
         if (svc.flatRateUsd != null) finalAmount = svc.flatRateUsd;
         if (svc.freeThresholdUsd != null && shipment.totalShipmentWeightLb === 0) finalAmount = 0;
@@ -182,7 +138,7 @@ export class EasyPostAdapter implements CarrierAdapter {
           serviceName: svc.label,
           amountUsd: finalAmount,
           currency: 'USD',
-          debug: `rateSource=easypost carrier=${carrierKey} acct=${CARRIER_ACCOUNTS[carrierKey]}`,
+          debug: `rateSource=easypost carrier=${carrierKey} acct=${CARRIER_ACCOUNTS[carrierKey]} epService=${match.service}`,
         });
       }
     }
