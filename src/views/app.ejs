@@ -32,10 +32,8 @@
     .est-rates-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 16px 0 8px; }
     .est-rates-list { display: flex; flex-direction: column; gap: 7px; }
     .est-rate-card { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
-    .est-rate-carrier { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #fff; background: #888; padding: 3px 7px; border-radius: 4px; white-space: nowrap; min-width: 48px; text-align: center; }
-    .est-rate-carrier.fedex { background: #6b21a8; }
-    .est-rate-carrier.ups   { background: #92400e; }
-    .est-rate-carrier.usps  { background: #1d4ed8; }
+    .est-rate-carrier { display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 32px; border-radius: 6px; background: #fff; border: 1px solid #e5e7eb; flex-shrink: 0; overflow: hidden; }
+    .est-rate-carrier img { max-width: 56px; max-height: 28px; object-fit: contain; display: block; }
     .est-rate-service { flex: 1; font-size: 14px; color: var(--text); }
     .est-rate-price { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; }
     .est-no-rates { color: var(--muted); font-size: 13px; margin-top: 8px; }
@@ -766,7 +764,7 @@ loadUploadedWeightsTable();
         data.rates.forEach(function(r) {
           const price = r.amountUsd != null ? '$' + r.amountUsd.toFixed(2) : '—';
           html += '<div class="est-rate-card">';
-          html += '<span class="est-rate-carrier ' + r.carrier.toLowerCase() + '">' + esc(r.carrier.toUpperCase()) + '</span>';
+          html += '<span class="est-rate-carrier"><img src="https://assets.easypost.com/assets/images/carrier-logos/' + r.carrier.toLowerCase() + '.png" alt="' + esc(r.carrier.toUpperCase()) + '" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'' + esc(r.carrier.toUpperCase()) + '\'"></span>';
           html += '<span class="est-rate-service">' + esc(r.serviceName || r.service || '') + '</span>';
           html += '<span class="est-rate-price">' + esc(price) + '</span>';
           html += '</div>';
