@@ -1,8 +1,6 @@
 import { Router } from 'express';
 import { buildShipment } from '../services/ratingEngine';
-import { FedexAdapter } from '../carriers/fedex';
-import { UpsAdapter } from '../carriers/ups';
-import { UspsAdapter } from '../carriers/usps';
+import { EasyPostAdapter } from '../carriers/easypost';
 
 const router = Router();
 
@@ -23,28 +21,27 @@ router.post('/carrier-service/rates', async (req, res) => {
         title: item.product_title ? String(item.product_title) : undefined,
         quantity: Number(item.quantity ?? 1),
         // item.grams is Shopify's rounded integer weight.
-        // We do NOT trust it for calculation - catalog.ts will fetch the true value.
-        // We pass it as shopifyRoundedGrams for logging/debugging only.
-        shopifyRoundedGrams: item.grams != null ? Number(item.grams) : undefined,
-        trueWeightGrams: undefined,
+        // We prefer the true weight from metafields (resolved in buildShipment).
+        grams: Number(item.grams ?? 0),
       };
     });
 
     const destination = {
-      countryCode: String(rateReq?.destination?.country ?? 'US'),
+      countryCode: String(rateReq?.destination?.country ?? ''),
+      postalCode: String(rateReq?.destination?.postal_code ?? ''),
       provinceCode: rateReq?.destination?.province
-        ? String(rateReq.destination.province) : undefined,
-      postalCode: rateReq?.destination?.postal_code
-        ? String(rateReq.destination.postal_code) : undefined,
+        ? String(rateReq.destination.province)
+        : undefined,
       city: rateReq?.destination?.city
-        ? String(rateReq.destination.city) : undefined,
+        ? String(rateReq.destination.city)
+        : undefined,
       address1: rateReq?.destination?.address1
         ? String(rateReq.destination.address1) : undefined,
     };
 
     const shipment = await buildShipment(lines, destination);
 
-    const adapters = [new FedexAdapter(), new UpsAdapter(), new UspsAdapter()];
+    const adapters = [new EasyPostAdapter()];
     const results = await Promise.all(adapters.map((a) => a.getRates(shipment)));
     const quotes = results.flat().sort((a, b) => a.amountUsd - b.amountUsd);
 
@@ -58,8 +55,8 @@ router.post('/carrier-service/rates', async (req, res) => {
       })),
     });
   } catch (err) {
-    console.error('[carrier-service/rates] Error:', err);
-    res.json({ rates: [] });
+    console.error('[carrier] Rate callback error:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
