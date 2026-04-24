@@ -2,7 +2,7 @@ import { CarrierAdapter } from './base';
 import { RateQuote, Shipment } from '../types';
 import { getSettings } from '../services/settingsStore';
 import { env } from '../lib/env';
-
+// estDeliveryDays support added
 // EasyPost carrier account IDs mapped to our carrier setting keys
 const CARRIER_ACCOUNTS: Record<string, string> = {
   // Personal carrier accounts
