@@ -96,7 +96,7 @@ function internalCarrierKey(carrierKey: string): RateQuote['carrier'] {
 async function fetchAllRatesForAccount(
   accountId: string,
   shipment: Shipment,
-): Promise<Map<string, number>> {
+): Promise<Map<string, { rate: number; estDeliveryDays: number | null }>> {
   const body = {
     shipment: {
       from_address: {
@@ -137,9 +137,9 @@ async function fetchAllRatesForAccount(
   const rates: any[] = data.rates ?? [];
 
   // Return a map of service -> rate so we can look up by service code quickly
-  const rateMap = new Map<string, number>();
+  const rateMap = new Map<string, { rate: number; estDeliveryDays: number | null }>();
   for (const r of rates) {
-    rateMap.set(r.service as string, parseFloat(r.rate));
+          rateMap.set(r.service as string, { rate: parseFloat(r.rate), estDeliveryDays: r.est_delivery_days ?? null });
   }
   return rateMap;
 }
@@ -155,7 +155,7 @@ export class EasyPostAdapter implements CarrierAdapter {
       .map(([key]) => key);
 
     // Fetch all rates in parallel — ONE API call per carrier account
-    const ratesByCarrierKey = new Map<string, Map<string, number>>();
+        const ratesByCarrierKey = new Map<string, Map<string, { rate: number; estDeliveryDays: number | null }>>();
     await Promise.all(
       enabledCarrierKeys.map(async (carrierKey) => {
         const accountId = CARRIER_ACCOUNTS[carrierKey];
@@ -168,7 +168,7 @@ export class EasyPostAdapter implements CarrierAdapter {
     for (const [carrierKey, carrierSettings] of Object.entries(settings.carriers)) {
       if (!carrierSettings.enabled) continue;
       if (!(carrierKey in CARRIER_ACCOUNTS)) continue;
-
+      const rateMap = ratesByCarrierKey.get(carrierKey) ?? new Map<string, { rate: number; estDeliveryDays: number | null }>();
       const rateMap = ratesByCarrierKey.get(carrierKey) ?? new Map<string, number>();
       const svcCodeMap = EP_SERVICE_CODE[carrierKey] ?? {};
 
@@ -188,8 +188,10 @@ export class EasyPostAdapter implements CarrierAdapter {
         const epServiceCode = svcCodeMap[svc.code];
         if (!epServiceCode) continue;
 
-        const rawRate = rateMap.get(epServiceCode);
-        if (rawRate == null) continue;
+              const epRate = rateMap.get(epServiceCode);
+              if (epRate == null) continue;
+              const rawRate = epRate.rate;
+              const estDeliveryDays = epRate.estDeliveryDays;
 
         let finalAmount = rawRate;
         if (svc.handlingFeeUsd) finalAmount += svc.handlingFeeUsd;
@@ -202,6 +204,7 @@ export class EasyPostAdapter implements CarrierAdapter {
           serviceName: svc.label,
           amountUsd: finalAmount,
           currency: 'USD',
+                    estDeliveryDays,
           debug: `rateSource=easypost carrier=${carrierKey} acct=${CARRIER_ACCOUNTS[carrierKey]} epSvc=${epServiceCode}`,
         });
       }
