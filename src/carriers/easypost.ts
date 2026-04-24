@@ -169,7 +169,6 @@ export class EasyPostAdapter implements CarrierAdapter {
       if (!carrierSettings.enabled) continue;
       if (!(carrierKey in CARRIER_ACCOUNTS)) continue;
       const rateMap = ratesByCarrierKey.get(carrierKey) ?? new Map<string, { rate: number; estDeliveryDays: number | null }>();
-      const rateMap = ratesByCarrierKey.get(carrierKey) ?? new Map<string, number>();
       const svcCodeMap = EP_SERVICE_CODE[carrierKey] ?? {};
 
       for (const svc of carrierSettings.services) {
