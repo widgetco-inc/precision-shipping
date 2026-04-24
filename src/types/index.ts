@@ -78,5 +78,6 @@ export interface RateQuote {
   serviceName: string;
   amountUsd: number;
   currency: string;
+    estDeliveryDays?: number | null;
   debug?: string;
 }
