@@ -101,6 +101,9 @@ async function fetchAllRatesForAccount(
   const body = {
     shipment: {
       from_address: {
+        street1: '1 Main St',
+        city: '',
+        state: '',
         zip: fromZip ?? '92806',
         country: 'US',
       },
