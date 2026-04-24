@@ -737,7 +737,7 @@ loadUploadedWeightsTable();
     try {
       const data = await fetch('/api/preview', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ destination: { countryCode: cc, postalCode: zip }, lines })
+        body: JSON.stringify({ destination: { countryCode: cc, postalCode: zip }, fromZip: document.getElementById('estFromZip').value.trim() || undefined, lines })
       }).then(r => r.json());
       const s = data.shipment;
       const fromZip = document.getElementById('estFromZip').value.trim();
