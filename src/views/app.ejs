@@ -1,4 +1,4 @@
-<!doctype html>
+Page_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_Down<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -36,6 +36,7 @@
     .est-rate-carrier img { max-width: 56px; max-height: 28px; object-fit: contain; display: block; }
     .est-rate-service { flex: 1; font-size: 14px; color: var(--text); }
     .est-rate-price { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; }
+    .est-rate-days { font-size: 13px; color: var(--muted); white-space: nowrap; min-width: 80px; text-align: right; }
     .est-no-rates { color: var(--muted); font-size: 13px; margin-top: 8px; }
     .est-ac-wt { font-size: 11px; color: var(--pill-on-text); font-weight: 600; }
     .est-totals { display: flex; flex-wrap: wrap; gap: 20px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin-top: 16px; margin-bottom: 4px; font-size: 13px; color: var(--muted); }
@@ -766,7 +767,8 @@ loadUploadedWeightsTable();
           html += '<div class="est-rate-card">';
           html += '<span class="est-rate-carrier"><img src="https://assets.easypost.com/assets/images/carrier-logos/' + r.carrier.toLowerCase() + '.png" alt="' + esc(r.carrier.toUpperCase()) + '" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'' + esc(r.carrier.toUpperCase()) + '\'"></span>';
           html += '<span class="est-rate-service">' + esc(r.serviceName || r.service || '') + '</span>';
-          html += '<span class="est-rate-price">' + esc(price) + '</span>';
+          
+          html += '<span class="est-rate-days">' + (r.delivery_days != null ? r.delivery_days + ' day' + (r.delivery_days !== 1 ? 's' : '') : '—') + '</span>';html += '<span class="est-rate-price">' + esc(price) + '</span>';
           html += '</div>';
         });
         html += '</div>';
