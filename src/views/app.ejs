@@ -768,7 +768,7 @@ loadUploadedWeightsTable();
           html += '<span class="est-rate-carrier"><img src="https://assets.easypost.com/assets/images/carrier-logos/' + r.carrier.toLowerCase() + '.png" alt="' + esc(r.carrier.toUpperCase()) + '" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'' + esc(r.carrier.toUpperCase()) + '\'"></span>';
           html += '<span class="est-rate-service">' + esc(r.serviceName || r.service || '') + '</span>';
           
-          html += '<span class="est-rate-days">' + (r.delivery_days != null ? r.delivery_days + ' day' + (r.delivery_days !== 1 ? 's' : '') : '—') + '</span>';html += '<span class="est-rate-price">' + esc(price) + '</span>';
+          html += '<span class="est-rate-days">' + (r.estDeliveryDays != null ? r.estDeliveryDays + ' day' + (r.estDeliveryDays !== 1 ? 's' : '') : '—') + '</span>';html += '<span class="est-rate-price">' + esc(price) + '</span>';
           html += '</div>';
         });
         html += '</div>';
