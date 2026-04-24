@@ -172,3 +172,14 @@ input {
     .grid.two, .grid.three, .carrier-groups { grid-template-columns: 1fr; }
     .hero { display: grid; gap: 12px; }
 }
+
+
+/* Estimated delivery days column in rate estimator cards */
+.est-rate-delivery {
+        margin-left: auto;
+        margin-right: 8px;
+        font-size: 0.78rem;
+        color: #6b7280;
+        white-space: nowrap;
+        align-self: center;
+}
