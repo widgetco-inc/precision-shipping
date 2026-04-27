@@ -148,6 +148,7 @@ async function fetchAllRatesForAccount(
   for (const r of rates) {
           rateMap.set(r.service as string, { rate: parseFloat(r.rate), estDeliveryDays: r.est_delivery_days ?? null });
   }
+  console.log('[EasyPost] rateMap for', accountId, JSON.stringify(Array.from(rateMap.keys())));
   return rateMap;
 }
 
