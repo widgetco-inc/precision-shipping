@@ -92,6 +92,17 @@ function internalCarrierKey(carrierKey: string): RateQuote['carrier'] {
   return carrierKey as RateQuote['carrier'];
 }
 
+// ZIP-to-city/state lookup for the estimator's "From ZIP" field.
+// Add entries here as needed when shipping from new origins.
+// This ensures from_address is always internally consistent for UPS/FedEx.
+const ZIP_ORIGINS: Record<string, { street1: string; city: string; state: string }> = {
+    '77204': { street1: '4800 Calhoun Rd',      city: 'Houston',  state: 'TX' },
+    '77001': { street1: '1 Main St',             city: 'Houston',  state: 'TX' },
+    '90210': { street1: '9595 Wilshire Blvd',    city: 'Beverly Hills', state: 'CA' },
+    '10001': { street1: '1 Penn Plaza',          city: 'New York', state: 'NY' },
+    '92806': { street1: '1550 S State College Blvd', city: 'Anaheim', state: 'CA' },
+};
+
 // Fetch ALL rates for a given carrier account from EasyPost in a single API call
 async function fetchAllRatesForAccount(
   accountId: string,
@@ -102,11 +113,9 @@ async function fetchAllRatesForAccount(
   const body = {
     shipment: {
       from_address: {
-        street1: '1550 S State College Blvd',
-        city: 'Anaheim',
-        state: 'CA',
-        zip: '92806',
-        country: 'US',
+                    ...(ZIP_ORIGINS[fromZip ?? '92806'] ?? { street1: '1 Main St', city: '', state: '' }),
+                  zip: fromZip ?? '92806',
+                  country: 'US',
       },
       to_address: {
         street1: shipment.destination.address1 ?? '123 Main St',
