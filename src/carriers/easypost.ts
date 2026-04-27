@@ -103,15 +103,13 @@ async function fetchAllRatesForAccount(
     shipment: {
       from_address: {
         street1: '1 Main St',
-        city: '',
-        state: '',
         zip: fromZip ?? '92806',
         country: 'US',
       },
       to_address: {
         street1: shipment.destination.address1 ?? '123 Main St',
-        city: shipment.destination.city ?? '',
-        state: shipment.destination.provinceCode ?? '',
+        ...(shipment.destination.city ? { city: shipment.destination.city } : {}),
+        ...(shipment.destination.provinceCode ? { state: shipment.destination.provinceCode } : {}),
         zip: shipment.destination.postalCode,
         country: shipment.destination.countryCode,
         ...(isResidential ? { residential: true } : {}),
