@@ -15,6 +15,7 @@ const previewSchema = z.object({
     address1:     z.string().optional(),
   }),
   fromZip: z.string().optional(),
+  isResidential: z.boolean().optional(),
   lines: z.array(z.object({
     variantId:       z.string().optional(),
     sku:             z.string().optional(),
@@ -33,7 +34,7 @@ router.post('/api/preview', requireApprovedAdmin, async (req, res) => {
 
   const shipment = await buildShipment(parsed.data.lines, parsed.data.destination);
   const adapters = [new EasyPostAdapter()];
-  const results = await Promise.all(adapters.map((a) => a.getRates(shipment, parsed.data.fromZip)));
+  const results = await Promise.all(adapters.map((a) => a.getRates(shipment, parsed.data.fromZip, parsed.data.isResidential)));
   const rates = results.flat().sort((a, b) => a.amountUsd - b.amountUsd);
 
   res.json({ shipment, rates });
