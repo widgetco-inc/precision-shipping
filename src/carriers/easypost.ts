@@ -108,8 +108,8 @@ async function fetchAllRatesForAccount(
       },
       to_address: {
         street1: shipment.destination.address1 ?? '123 Main St',
-        ...(shipment.destination.city ? { city: shipment.destination.city } : {}),
-        ...(shipment.destination.provinceCode ? { state: shipment.destination.provinceCode } : {}),
+        city: shipment.destination.city ?? '',
+        state: shipment.destination.provinceCode ?? '',
         zip: shipment.destination.postalCode,
         country: shipment.destination.countryCode,
         ...(isResidential ? { residential: true } : {}),
