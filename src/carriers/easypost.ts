@@ -105,7 +105,7 @@ async function fetchAllRatesForAccount(
         street1: '1550 S State College Blvd',
         city: 'Anaheim',
         state: 'CA',
-        zip: fromZip ?? '92806',
+        zip: '92806',
         country: 'US',
       },
       to_address: {
