@@ -681,7 +681,7 @@ loadUploadedWeightsTable();
 
   let rowCount = 0;
   function addRow(skuVal, qtyVal) {
-    skuVal = skuVal || ''; qtyVal = qtyVal || 1;
+    skuVal = skuVal || ''; qtyVal = qtyVal || '';
     const id  = ++rowCount;
     const sku = skuVal.toUpperCase().trim();
     const w   = skuWeights[sku];
@@ -693,7 +693,7 @@ loadUploadedWeightsTable();
         '<input type="text" class="est-sku-input" placeholder="SKU" value="' + esc(skuVal) + '" autocomplete="off" />' +
         '<div class="est-ac"></div>' +
       '</div>' +
-      '<input type="number" class="est-qty-input" value="' + qtyVal + '" min="1" step="1" />' +
+      '<input type="number" class="est-qty-input" value="' + qtyVal + '" min="0" step="1" />' +
       '<span class="est-unit-g' + (found ? ' found' : '') + '">' + (found ? w + ' g' : (skuVal ? 'Not found — enter g:' : '—')) + '</span>' +
       '<input type="number" class="est-manual-weight" step="0.0001" min="0.0001" placeholder="g" style="display:' + (!found && skuVal ? '' : 'none') + '" />' +
       '<span class="est-row-total">—</span>' +
