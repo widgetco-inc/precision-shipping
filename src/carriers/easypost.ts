@@ -102,7 +102,9 @@ async function fetchAllRatesForAccount(
   const body = {
     shipment: {
       from_address: {
-        street1: '1 Main St',
+        street1: '1550 S State College Blvd',
+        city: 'Anaheim',
+        state: 'CA',
         zip: fromZip ?? '92806',
         country: 'US',
       },
