@@ -135,7 +135,11 @@ async function fetchAllRatesForAccount(
     body: JSON.stringify(body),
   });
 
-  if (!resp.ok) return new Map();
+  if (!resp.ok) {
+    const errText = await resp.text();
+    console.error('[EasyPost] non-ok', accountId, resp.status, errText.substring(0, 300));
+    return new Map();
+  }
   const data = await resp.json();
   const rates: any[] = data.rates ?? [];
 
