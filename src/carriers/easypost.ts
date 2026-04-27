@@ -137,8 +137,8 @@ async function fetchAllRatesForAccount(
 
   if (!resp.ok) {
     const errText = await resp.text();
-    console.error('[EasyPost] non-ok', accountId, resp.status, errText.substring(0, 300));
-    return new Map();
+    console.error('[EasyPost] non-ok', accountId, resp.status, errText.substring(0, 500));
+    throw new Error('[EasyPost] ' + accountId + ' ' + resp.status + ': ' + errText.substring(0, 200));
   }
   const data = await resp.json();
   const rates: any[] = data.rates ?? [];
@@ -163,13 +163,18 @@ export class EasyPostAdapter implements CarrierAdapter {
 
     // Fetch all rates in parallel — ONE API call per carrier account
         const ratesByCarrierKey = new Map<string, Map<string, { rate: number; estDeliveryDays: number | null }>>();
-    await Promise.all(
+    const carrierResults = await Promise.allSettled(
       enabledCarrierKeys.map(async (carrierKey) => {
         const accountId = CARRIER_ACCOUNTS[carrierKey];
         const rateMap = await fetchAllRatesForAccount(accountId, shipment, fromZip, isResidential);
         ratesByCarrierKey.set(carrierKey, rateMap);
       }),
     );
+    carrierResults.forEach((r, i) => {
+      if (r.status === 'rejected') {
+        console.error('[EasyPost] carrier failed', enabledCarrierKeys[i], r.reason);
+      }
+    });
 
     // Match our service definitions to the fetched rates
     for (const [carrierKey, carrierSettings] of Object.entries(settings.carriers)) {
