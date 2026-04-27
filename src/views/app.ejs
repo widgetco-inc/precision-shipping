@@ -37,6 +37,9 @@ Page_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_Dow
     .est-rate-service { flex: 1; font-size: 14px; color: var(--text); }
     .est-rate-price { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; }
     .est-rate-days { font-size: 13px; color: var(--muted); white-space: nowrap; min-width: 80px; text-align: right; }
+      .est-residential-wrap { margin-top: 6px; }
+      .est-residential-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
+      .est-residential-label input { cursor: pointer; }
     .est-no-rates { color: var(--muted); font-size: 13px; margin-top: 8px; }
     .est-ac-wt { font-size: 11px; color: var(--pill-on-text); font-weight: 600; }
     .est-totals { display: flex; flex-wrap: wrap; gap: 20px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin-top: 16px; margin-bottom: 4px; font-size: 13px; color: var(--muted); }
@@ -183,8 +186,14 @@ Page_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_Dow
           <div class="grid three">
             <label class="est-label">
               <span class="est-label-text">From ZIP</span>
-              <input id="estFromZip" type="text" placeholder="ZIP code" maxlength="10" />
+              <input id="estFromZip" type="text" placeholder="ZIP code" maxlength="10" value="77204" />
             </label>
+          <div class="est-residential-wrap">
+            <label class="est-residential-label">
+              <input type="checkbox" id="estResidential" />
+              <span>Residential address</span>
+            </label>
+          </div>
             <label class="est-label">
               <span class="est-label-text">To ZIP / Postal code</span>
               <input id="estToZip" type="text" placeholder="ZIP / Postal code" />
@@ -737,7 +746,7 @@ loadUploadedWeightsTable();
     try {
       const data = await fetch('/api/preview', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ destination: { countryCode: cc, postalCode: zip }, fromZip: document.getElementById('estFromZip').value.trim() || undefined, lines })
+        body: JSON.stringify({ destination: { countryCode: cc, postalCode: zip }, fromZip: document.getElementById('estFromZip').value.trim() || undefined, isResidential: document.getElementById('estResidential').checked || undefined, lines })
       }).then(r => r.json());
       const s = data.shipment;
       const fromZip = document.getElementById('estFromZip').value.trim();
