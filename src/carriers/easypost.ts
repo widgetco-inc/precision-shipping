@@ -97,6 +97,7 @@ async function fetchAllRatesForAccount(
   accountId: string,
   shipment: Shipment,
   fromZip?: string,
+  isResidential?: boolean,
 ): Promise<Map<string, { rate: number; estDeliveryDays: number | null }>> {
   const body = {
     shipment: {
@@ -113,6 +114,7 @@ async function fetchAllRatesForAccount(
         state: shipment.destination.provinceCode ?? '',
         zip: shipment.destination.postalCode,
         country: shipment.destination.countryCode,
+        ...(isResidential ? { residential: true } : {}),
       },
       parcel: {
         weight: shipment.totalShipmentWeightLb * 16, // oz
@@ -146,7 +148,7 @@ async function fetchAllRatesForAccount(
 }
 
 export class EasyPostAdapter implements CarrierAdapter {
-  async getRates(shipment: Shipment, fromZip?: string): Promise<RateQuote[]> {
+  async getRates(shipment: Shipment, fromZip?: string, isResidential?: boolean): Promise<RateQuote[]> {
     const settings = getSettings();
     const quotes: RateQuote[] = [];
 
@@ -160,7 +162,7 @@ export class EasyPostAdapter implements CarrierAdapter {
     await Promise.all(
       enabledCarrierKeys.map(async (carrierKey) => {
         const accountId = CARRIER_ACCOUNTS[carrierKey];
-        const rateMap = await fetchAllRatesForAccount(accountId, shipment, fromZip);
+        const rateMap = await fetchAllRatesForAccount(accountId, shipment, fromZip, isResidential);
         ratesByCarrierKey.set(carrierKey, rateMap);
       }),
     );
