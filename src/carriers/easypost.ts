@@ -151,6 +151,16 @@ async function fetchAllRatesForAccount(
   }
   const data = await resp.json();
   const rates: any[] = data.rates ?? [];
+      // Diagnostic: log raw rates and messages from EasyPost
+      if (rates.length === 0) {
+              console.warn('[EasyPost] ZERO rates for', accountId,
+                                   'messages:', JSON.stringify(data.messages ?? []),
+                                   'errors:', JSON.stringify(data.errors ?? []),
+                                   'raw_rate_count:', (data.rates ?? []).length,
+                                   'from_zip:', fromZip);
+      } else {
+              console.log('[EasyPost] raw services for', accountId, JSON.stringify(rates.map((r: any) => r.service)));
+      }
 
   // Return a map of service -> rate so we can look up by service code quickly
   const rateMap = new Map<string, { rate: number; estDeliveryDays: number | null }>();
