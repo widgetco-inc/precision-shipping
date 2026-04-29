@@ -185,6 +185,7 @@ async function fetchAllRatesForAccount(
                   state: shipment.destination.provinceCode ?? (shipment.isDomestic ? usZipToState(shipment.destination.postalCode) : ''),
         zip: shipment.destination.postalCode,
         country: shipment.destination.countryCode,
+        company: 'WidgetCo',
         ...(isResidential ? { residential: true } : {}),
       },
       parcel: {
@@ -193,6 +194,20 @@ async function fetchAllRatesForAccount(
         width: 9,
         height: 4,
       },
+      ...(!shipment.isDomestic ? {
+        customs_info: {
+          contents_type: 'merchandise',
+          restriction_type: 'none',
+          eel_pfc: 'NOEEI 30.37(a)',
+          customs_items: [{
+            description: 'Merchandise',
+            quantity: 1,
+            value: 1,
+            weight: shipment.totalShipmentWeightLb * 16,
+            origin_country: 'US',
+          }],
+        },
+      } : {}),
       carrier_accounts: [accountId],
     },
   };
