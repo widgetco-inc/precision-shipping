@@ -181,7 +181,7 @@ async function fetchAllRatesForAccount(
         street1: shipment.destination.address1 ?? '123 Main St',
           city: shipment.destination.city ?? '',
                   // FedEx requires state — fall back to ZIP-based lookup when Shopify doesn't provide it
-                  state: shipment.destination.provinceCode ?? usZipToState(shipment.destination.postalCode),
+                  state: shipment.destination.provinceCode ?? (shipment.isDomestic ? usZipToState(shipment.destination.postalCode) : ''),
         zip: shipment.destination.postalCode,
         country: shipment.destination.countryCode,
         ...(isResidential ? { residential: true } : {}),
