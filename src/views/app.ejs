@@ -140,14 +140,14 @@ Page_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_Dow
                   <% if (kAcct) { %><p class="acct-label"><%= kAcct %></p><% } %>
                   <% config.services.forEach(function(service, si){ %>
                     <div class="service-row"><span class="service-name"><%= service.label %></span>
-                    <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> data-carrier="<%= carrier %>" data-svc-idx="<%= si %>" onchange="toggleService(this)" /><span class="slider"></span></label></div>
+                    <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> data-carrier="<%= carrier %>" data-svc-idx="<%= si %>" onchange="toggleService(this)" /><span class="toggle-slider"></span></label></div>
                   <% }); %>
                   <% if (settings.carriers.ups_f) { %>
                     <% var fAcct = typeof upsFAccountNumber !== 'undefined' ? mask(upsFAccountNumber) : ''; %>
                     <% if (fAcct) { %><p class="acct-label"><%= fAcct %></p><% } %>
                     <% settings.carriers.ups_f.services.forEach(function(service, si){ %>
                       <div class="service-row"><span class="service-name"><%= service.label %></span>
-                      <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> data-carrier="ups_f" data-svc-idx="<%= si %>" onchange="toggleService(this)" /><span class="slider"></span></label></div>
+                      <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> data-carrier="ups_f" data-svc-idx="<%= si %>" onchange="toggleService(this)" /><span class="toggle-slider"></span></label></div>
                     <% }); %>
                   <% } %>
                 <% } else { %>
@@ -156,7 +156,7 @@ Page_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_Dow
                   <% if (acct) { %><p class="acct-label"><%= acct %></p><% } %>
                   <% config.services.forEach(function(service, si){ %>
                     <div class="service-row"><span class="service-name"><%= service.label %></span>
-                    <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> data-carrier="<%= carrier %>" data-svc-idx="<%= si %>" onchange="toggleService(this)" /><span class="slider"></span></label></div>
+                    <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> data-carrier="<%= carrier %>" data-svc-idx="<%= si %>" onchange="toggleService(this)" /><span class="toggle-slider"></span></label></div>
                   <% }); %>
                 <% } %>
               </div>
