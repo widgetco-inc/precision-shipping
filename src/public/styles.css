@@ -86,7 +86,10 @@ body {
     border-radius: 999px;
     font-size: 12px;
     font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s;
 }
+.pill:hover { opacity: 0.8; }
 .pill.on { background: var(--pill-on); color: var(--pill-on-text); }
 .pill.off { background: var(--pill-off); color: var(--pill-off-text); }
 /* -- Service rows & toggles ------------------- */
