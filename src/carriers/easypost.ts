@@ -9,7 +9,7 @@ const CARRIER_ACCOUNTS: Record<string, string> = {
   fedex: 'ca_544bae948c20483c947448953a736823',
   ups: 'ca_5065a768022845f89a3e646a6eafa19b',
   ups_f: 'ca_61b89a3dcdaa4c8b8acd96e595c2de91',
-  ups_one_rate: 'ca_024451c3996d417fa0ecf521bbd30f82',
+  ups_one_rate: 'ca_024451c3996d417fa0ecf521bbd0f82',
   usps: 'ca_2046b502461e4ad68b6cf6c0f0f9843b',
   // EasyPost Wallet carriers
   dhl_ecomm: 'ca_0835e9c34bac49d1a0a419bfc3a6074b',
@@ -176,6 +176,7 @@ async function fetchAllRatesForAccount(
                     ...(ZIP_ORIGINS[fromZip ?? '92806'] ?? { street1: '1 Main St', city: '', state: '' }),
                   zip: fromZip ?? '92806',
                   country: 'US',
+                  company: 'WidgetCo',
       },
       to_address: {
         street1: shipment.destination.address1 ?? '123 Main St',
