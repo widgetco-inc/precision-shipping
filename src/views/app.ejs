@@ -61,6 +61,15 @@ Page_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_Dow
   
     button.pill { border: none; font: inherit; outline: none; cursor: pointer; }
     .toggle { cursor: pointer; }
+  
+    /* ── Carrier two-column service layout ─────────────────────────────────────── */
+    .carrier-head-right { display: flex; align-items: center; gap: 10px; }
+    .carrier-status-label { font-size: 12px; font-weight: 600; color: var(--muted); }
+    .carrier-toggle { flex-shrink: 0; }
+    .services-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; margin-top: 8px; }
+    .services-col { }
+    .svc-col-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 8px 0 4px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+    .svc-col-empty { color: var(--muted); font-size: 13px; padding: 6px 0; }
   </style>
 </head>
 <body>
@@ -131,34 +140,51 @@ Page_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_Dow
           <% Object.entries(settings.carriers).filter(([c])=>c!=='ups_f').forEach(([carrier, config]) => { %>
             <div class="carrier-box">
               <div class="carrier-head">
-                <h4><%= carrier.toUpperCase().replace('_','-') %></h4>
-                <button class="pill <%= config.enabled ? 'on' : 'off' %>" onclick="toggleCarrier('<%= carrier %>', this)"><%= config.enabled ? 'Enabled' : 'Disabled' %></button>
+                <h4><%= carrier.toUpperCase().replace(/_/g,'-') %></h4>
+                <div class="carrier-head-right">
+                  <span class="carrier-status-label"><%= config.enabled ? 'Enabled' : 'Disabled' %></span>
+                  <label class="toggle carrier-toggle"><input type="checkbox" <%= config.enabled ? 'checked' : '' %> onchange="toggleCarrierSwitch('<%= carrier %>', this)" /><span class="toggle-slider"></span></label>
+                </div>
               </div>
-              <div>
-                <% if (carrier === 'ups') { %>
-                  <% var kAcct = typeof upsAccountNumber !== 'undefined' ? mask(upsAccountNumber) : ''; %>
-                  <% if (kAcct) { %><p class="acct-label"><%= kAcct %></p><% } %>
-                  <% config.services.forEach(function(service, si){ %>
-                    <div class="service-row"><span class="service-name"><%= service.label %></span>
-                    <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> data-carrier="<%= carrier %>" data-svc-idx="<%= si %>" onchange="toggleService(this)" /><span class="toggle-slider"></span></label></div>
+              <div class="services-columns">
+                <%
+                  var allSvcs = [];
+                  if (carrier === 'ups') {
+                    var kAcct = typeof upsAccountNumber !== 'undefined' ? mask(upsAccountNumber) : '';
+                    config.services.forEach(function(s,i){ allSvcs.push({s:s,i:i,key:carrier}); });
+                    if (settings.carriers.ups_f) {
+                      var fAcct = typeof upsFAccountNumber !== 'undefined' ? mask(upsFAccountNumber) : '';
+                      settings.carriers.ups_f.services.forEach(function(s,i){ allSvcs.push({s:s,i:i,key:'ups_f'}); });
+                    }
+                  } else {
+                    var acct = typeof fedexAccountNumber !== 'undefined' && carrier === 'fedex' ? mask(fedexAccountNumber)
+                             : typeof uspsAccountNumber !== 'undefined' && carrier === 'usps' ? mask(uspsAccountNumber)
+                             : '';
+                    config.services.forEach(function(s,i){ allSvcs.push({s:s,i:i,key:carrier}); });
+                  }
+                  var groundSvcs = allSvcs.filter(function(x){ return !x.s.air; });
+                  var airSvcs   = allSvcs.filter(function(x){ return  x.s.air; });
+                %>
+                <div class="services-col">
+                  <p class="svc-col-label">Ground / Economy</p>
+                  <% groundSvcs.forEach(function(x){ %>
+                    <div class="service-row">
+                      <span class="service-name"><%= x.s.label %></span>
+                      <label class="toggle"><input type="checkbox" <%= x.s.enabled ? 'checked' : '' %> data-carrier="<%= x.key %>" data-svc-idx="<%= x.i %>" onchange="toggleService(this)" /><span class="toggle-slider"></span></label>
+                    </div>
                   <% }); %>
-                  <% if (settings.carriers.ups_f) { %>
-                    <% var fAcct = typeof upsFAccountNumber !== 'undefined' ? mask(upsFAccountNumber) : ''; %>
-                    <% if (fAcct) { %><p class="acct-label"><%= fAcct %></p><% } %>
-                    <% settings.carriers.ups_f.services.forEach(function(service, si){ %>
-                      <div class="service-row"><span class="service-name"><%= service.label %></span>
-                      <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> data-carrier="ups_f" data-svc-idx="<%= si %>" onchange="toggleService(this)" /><span class="toggle-slider"></span></label></div>
-                    <% }); %>
-                  <% } %>
-                <% } else { %>
-                  <% var acctMap = {fedex: fedexAccountNumber, usps: uspsAccountNumber}; %>
-                  <% var acct = typeof acctMap[carrier] !== 'undefined' ? mask(acctMap[carrier]) : ''; %>
-                  <% if (acct) { %><p class="acct-label"><%= acct %></p><% } %>
-                  <% config.services.forEach(function(service, si){ %>
-                    <div class="service-row"><span class="service-name"><%= service.label %></span>
-                    <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> data-carrier="<%= carrier %>" data-svc-idx="<%= si %>" onchange="toggleService(this)" /><span class="toggle-slider"></span></label></div>
+                  <% if (!groundSvcs.length) { %><p class="svc-col-empty">—</p><% } %>
+                </div>
+                <div class="services-col">
+                  <p class="svc-col-label">Air / Express</p>
+                  <% airSvcs.forEach(function(x){ %>
+                    <div class="service-row">
+                      <span class="service-name"><%= x.s.label %></span>
+                      <label class="toggle"><input type="checkbox" <%= x.s.enabled ? 'checked' : '' %> data-carrier="<%= x.key %>" data-svc-idx="<%= x.i %>" onchange="toggleService(this)" /><span class="toggle-slider"></span></label>
+                    </div>
                   <% }); %>
-                <% } %>
+                  <% if (!airSvcs.length) { %><p class="svc-col-empty">—</p><% } %>
+                </div>
               </div>
             </div>
           <% }); %>
@@ -864,24 +890,33 @@ function savePackagingFactor() {
 <script>
 // ── Carrier & Service Toggles ────────────────────────────────────────────────
 async function toggleCarrier(carrierKey, btnEl) {
-  btnEl.disabled = true;
+  // Legacy pill toggle — find sibling switch and delegate
+  const box = btnEl.closest('.carrier-box');
+  const chk = box ? box.querySelector('.carrier-toggle input') : null;
+  if (chk) { chk.checked = !chk.checked; await toggleCarrierSwitch(carrierKey, chk); } 
+}
+async function toggleCarrierSwitch(carrierKey, chkEl) {
+  chkEl.disabled = true;
+  chkEl.disabled = true;
   try {
     const s = await fetch('/api/settings').then(function(r){ return r.json(); });
     if (!s.carriers[carrierKey]) { alert('Carrier not found: ' + carrierKey); return; }
-    s.carriers[carrierKey].enabled = !s.carriers[carrierKey].enabled;
+    s.carriers[carrierKey].enabled = chkEl.checked;
     const res = await fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(s)
     });
-    if (!res.ok) { alert('Save failed. Please try again.'); return; }
+    if (!res.ok) { alert('Save failed. Please try again.'); chkEl.checked = !chkEl.checked; return; }
     const isEnabled = s.carriers[carrierKey].enabled;
-    btnEl.textContent = isEnabled ? 'Enabled' : 'Disabled';
-    btnEl.className = 'pill ' + (isEnabled ? 'on' : 'off');
+    const box = chkEl.closest('.carrier-box');
+    const lbl = box ? box.querySelector('.carrier-status-label') : null;
+    if (lbl) { lbl.textContent = isEnabled ? 'Enabled' : 'Disabled'; }
   } catch(e) {
     alert('Network error: ' + e.message);
+    chkEl.checked = !chkEl.checked;
   } finally {
-    btnEl.disabled = false;
+    chkEl.disabled = false;
   }
 }
 
