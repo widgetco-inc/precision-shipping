@@ -9,7 +9,7 @@ Page_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_Dow
     .est-section { margin-top: 20px; }
     .est-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 12px; font-weight: 700; }
     .est-sku-header { display: grid; grid-template-columns: 1fr 130px 130px 110px 32px; gap: 8px; padding: 4px 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); border-bottom: 1px solid var(--line); }
-    .est-row { display: grid; grid-template-columns: 1fr 130px 130px 110px 32px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+    .est-row { display: grid; grid-template-columns: 1fr 130p 130px 110px 32px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
     .est-row:last-child { border-bottom: none; }
     .est-sku-wrap { position: relative; }
     .est-sku-input, .est-qty-input, .est-manual-weight { width: 100%; border: 1.5px solid #d1d5db; border-radius: 8px; padding: 11px 12px; font: inherit; font-size: 14px; box-sizing: border-box; background: #fff; }
@@ -58,6 +58,9 @@ Page_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_Dow
     .weights-table tbody tr:hover { background: var(--bg); }
     .weights-table td:last-child, .weights-table th:last-child { text-align: center; }
     .sku-search-row input { font-size: 13px; padding: 7px 12px; width: 260px; border-radius: 10px; }
+  
+    button.pill { border: none; font: inherit; outline: none; cursor: pointer; }
+    .toggle { cursor: pointer; }
   </style>
 </head>
 <body>
@@ -129,31 +132,31 @@ Page_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_DownPage_Dow
             <div class="carrier-box">
               <div class="carrier-head">
                 <h4><%= carrier.toUpperCase().replace('_','-') %></h4>
-                <span class="pill <%= config.enabled ? 'on' : 'off' %>"><%= config.enabled ? 'Enabled' : 'Disabled' %></span>
+                <button class="pill <%= config.enabled ? 'on' : 'off' %>" onclick="toggleCarrier('<%= carrier %>', this)"><%= config.enabled ? 'Enabled' : 'Disabled' %></button>
               </div>
               <div>
                 <% if (carrier === 'ups') { %>
                   <% var kAcct = typeof upsAccountNumber !== 'undefined' ? mask(upsAccountNumber) : ''; %>
                   <% if (kAcct) { %><p class="acct-label"><%= kAcct %></p><% } %>
-                  <% config.services.forEach(function(service){ %>
+                  <% config.services.forEach(function(service, si){ %>
                     <div class="service-row"><span class="service-name"><%= service.label %></span>
-                    <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> disabled /><span class="slider"></span></label></div>
+                    <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> data-carrier="<%= carrier %>" data-svc-idx="<%= si %>" onchange="toggleService(this)" /><span class="slider"></span></label></div>
                   <% }); %>
                   <% if (settings.carriers.ups_f) { %>
                     <% var fAcct = typeof upsFAccountNumber !== 'undefined' ? mask(upsFAccountNumber) : ''; %>
                     <% if (fAcct) { %><p class="acct-label"><%= fAcct %></p><% } %>
-                    <% settings.carriers.ups_f.services.forEach(function(service){ %>
+                    <% settings.carriers.ups_f.services.forEach(function(service, si){ %>
                       <div class="service-row"><span class="service-name"><%= service.label %></span>
-                      <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> disabled /><span class="slider"></span></label></div>
+                      <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> data-carrier="ups_f" data-svc-idx="<%= si %>" onchange="toggleService(this)" /><span class="slider"></span></label></div>
                     <% }); %>
                   <% } %>
                 <% } else { %>
                   <% var acctMap = {fedex: fedexAccountNumber, usps: uspsAccountNumber}; %>
                   <% var acct = typeof acctMap[carrier] !== 'undefined' ? mask(acctMap[carrier]) : ''; %>
                   <% if (acct) { %><p class="acct-label"><%= acct %></p><% } %>
-                  <% config.services.forEach(function(service){ %>
+                  <% config.services.forEach(function(service, si){ %>
                     <div class="service-row"><span class="service-name"><%= service.label %></span>
-                    <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> disabled /><span class="slider"></span></label></div>
+                    <label class="toggle"><input type="checkbox" <%= service.enabled ? 'checked' : '' %> data-carrier="<%= carrier %>" data-svc-idx="<%= si %>" onchange="toggleService(this)" /><span class="slider"></span></label></div>
                   <% }); %>
                 <% } %>
               </div>
@@ -857,6 +860,59 @@ function savePackagingFactor() {
   // Hash changes (nav clicks)
   window.addEventListener('hashchange', () => showPage(getPage()));
 })();
+</script>
+<script>
+// ── Carrier & Service Toggles ────────────────────────────────────────────────
+async function toggleCarrier(carrierKey, btnEl) {
+  btnEl.disabled = true;
+  try {
+    const s = await fetch('/api/settings').then(function(r){ return r.json(); });
+    if (!s.carriers[carrierKey]) { alert('Carrier not found: ' + carrierKey); return; }
+    s.carriers[carrierKey].enabled = !s.carriers[carrierKey].enabled;
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(s)
+    });
+    if (!res.ok) { alert('Save failed. Please try again.'); return; }
+    const isEnabled = s.carriers[carrierKey].enabled;
+    btnEl.textContent = isEnabled ? 'Enabled' : 'Disabled';
+    btnEl.className = 'pill ' + (isEnabled ? 'on' : 'off');
+  } catch(e) {
+    alert('Network error: ' + e.message);
+  } finally {
+    btnEl.disabled = false;
+  }
+}
+
+async function toggleService(chkEl) {
+  const carrierKey = chkEl.getAttribute('data-carrier');
+  const svcIdx = parseInt(chkEl.getAttribute('data-svc-idx'), 10);
+  chkEl.disabled = true;
+  try {
+    const s = await fetch('/api/settings').then(function(r){ return r.json(); });
+    if (!s.carriers[carrierKey] || !s.carriers[carrierKey].services[svcIdx]) {
+      alert('Service not found.');
+      chkEl.checked = !chkEl.checked;
+      return;
+    }
+    s.carriers[carrierKey].services[svcIdx].enabled = chkEl.checked;
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(s)
+    });
+    if (!res.ok) {
+      alert('Save failed. Please try again.');
+      chkEl.checked = !chkEl.checked;
+    }
+  } catch(e) {
+    alert('Network error: ' + e.message);
+    chkEl.checked = !chkEl.checked;
+  } finally {
+    chkEl.disabled = false;
+  }
+}
 </script>
 </body>
 </html>
