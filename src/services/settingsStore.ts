@@ -40,6 +40,10 @@ export async function loadSettingsFromDb(): Promise<void> {
     if (res.rows.length > 0) {
       const fromDb = res.rows[0].value as AppSettings;
       _cachedSettings = migrateMissingServices(fromDb);
+      // One-time fix: correct legacy packageWeightPct of 0.1 (wrong default) to 1.05 (+5% tare)
+      if (_cachedSettings.packaging.packageWeightPct <= 0.1) {
+        _cachedSettings.packaging.packageWeightPct = 1.05;
+      }
       // Flush any migration changes back to DB
       await _saveToDb(_cachedSettings);
     } else {
