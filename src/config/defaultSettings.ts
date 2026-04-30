@@ -90,7 +90,7 @@ export const defaultSettings: AppSettings = {
         },
     },
     packaging: {
-        packageWeightPct: 0.1,
+        packageWeightPct: 1.05,
         expressEnvelopeMaxWeightLb: 0.5,
         useFedexEnvelopeForExpress: false,
     },
