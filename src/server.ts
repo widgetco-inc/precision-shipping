@@ -9,6 +9,7 @@ import appRoutes from './routes/app';
 import previewRoutes from './routes/preview';
 import carrierRoutes from './routes/carrier';
 import adminRoutes from './routes/admin';
+import { loadSettingsFromDb } from './services/settingsStore';
 import weightsRoutes from './routes/weights';
 
 const app = express();
@@ -89,6 +90,13 @@ process.on('uncaughtException', (err) => {
 });
 // ─────────────────────────────────────────────────────────────────────────────
 
-app.listen(env.port, () => {
-  console.log(`WidgetCo shipping app listening on port ${env.port}`);
+loadSettingsFromDb().then(() => {
+  app.listen(env.port, () => {
+    console.log(`WidgetCo shipping app listening on port ${env.port}`);
+  });
+}).catch((err) => {
+  console.error('[startup] Failed to load settings from DB:', err);
+  app.listen(env.port, () => {
+    console.log(`WidgetCo shipping app listening on port ${env.port} (DB load failed)`);
+  });
 });
