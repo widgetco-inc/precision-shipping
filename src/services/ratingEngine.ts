@@ -35,9 +35,8 @@ export async function buildShipment(
         0
       );
 
-  const packageWeightGrams =
-        totalItemWeightGrams * settings.packaging.packageWeightPct;
-    const totalShipmentWeightGrams = totalItemWeightGrams * settings.packaging.packageWeightPct;
+  const packageWeightGrams = totalItemWeightGrams * (settings.packaging.packageWeightPct - 1);
+  const totalShipmentWeightGrams = totalItemWeightGrams + packageWeightGrams;
     const totalShipmentWeightLb = totalShipmentWeightGrams / GRAMS_PER_LB;
 
   const countryUpper = destination.countryCode.toUpperCase();
