@@ -791,7 +791,8 @@ loadUploadedWeightsTable();
         if (L > 0 && W > 0 && H > 0) html += '<tr><td>Box</td><td>' + L + ' × ' + W + ' × ' + H + ' in</td></tr>';
         html += '<tr><td>Items</td><td>' + lines.reduce((a, l) => a + l.quantity, 0).toLocaleString() + '</td></tr>';
         html += '<tr><td>Item weight</td><td>' + (s.totalItemWeightGrams?.toFixed(2) ?? '—') + ' g (' + ((s.totalItemWeightGrams ?? 0) / 453.592).toFixed(4) + ' lb)</td></tr>';
-        html += '<tr><td>Shipment wt</td><td>' + (s.totalShipmentWeightGrams?.toFixed(2) ?? '—') + ' g (' + (s.totalShipmentWeightLb?.toFixed(4) ?? '—') + ' lb)</td></tr>';
+        html += '<tr><td>Package weight (5%)</td><td>' + (s.packageWeightGrams?.toFixed(2) ?? '—') + ' g (' + ((s.packageWeightGrams ?? 0) / 453.592).toFixed(4) + ' lb)</td></tr>';
+        html += '<tr><td><strong>Shipment weight</strong></td><td><strong>' + (s.totalShipmentWeightGrams?.toFixed(2) ?? '—') + ' g (' + (s.totalShipmentWeightLb?.toFixed(4) ?? '—') + ' lb)</strong></td></tr>';
         html += '</table></div>';
       }
 
