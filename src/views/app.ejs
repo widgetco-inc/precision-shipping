@@ -912,6 +912,15 @@ async function toggleCarrierSwitch(carrierKey, chkEl) {
     const box = chkEl.closest('.carrier-box');
     const lbl = box ? box.querySelector('.carrier-status-label') : null;
     if (lbl) { lbl.textContent = isEnabled ? 'Enabled' : 'Disabled'; }
+    // When carrier is toggled off, also turn off all its service toggles
+    if (!isEnabled && box) {
+      box.querySelectorAll('input[type="checkbox"][data-carrier]').forEach(cb => {
+        if (cb.checked) {
+          cb.checked = false;
+          cb.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+    }
   } catch(e) {
     alert('Network error: ' + e.message);
     chkEl.checked = !chkEl.checked;
