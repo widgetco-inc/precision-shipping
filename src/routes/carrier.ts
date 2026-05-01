@@ -116,4 +116,45 @@ router.post('/api/carrier-service/register', requireApprovedAdmin, async (req, r
   }
 });
 
+/**
+ * POST /api/carrier-service/fix-callback
+ * Updates the registered carrier service callback URL to use APP_BASE_URL.
+ */
+router.post('/api/carrier-service/fix-callback', requireApprovedAdmin, async (req, res) => {
+  const token = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
+  const shop = process.env.SHOPIFY_SHOP;
+  const appBaseUrl = (process.env.APP_BASE_URL ?? 'https://ship.widgetco.com').replace(/\/$/, '');
+  const apiVersion = process.env.SHOPIFY_API_VERSION ?? '2024-01';
+
+  if (!token || !shop) {
+    res.status(500).json({ error: 'SHOPIFY_ADMIN_ACCESS_TOKEN or SHOPIFY_SHOP not set' });
+    return;
+  }
+
+  try {
+    const listRes = await fetch(`https://${shop}/admin/api/${apiVersion}/carrier_services.json`, {
+      headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
+    });
+    const listData: any = await listRes.json();
+    if (!listRes.ok) { res.status(listRes.status).json({ error: 'List failed', details: listData }); return; }
+
+    const existing = (listData.carrier_services ?? []).find((cs: any) => cs.name === 'Precision Shipping');
+    if (!existing) { res.status(404).json({ error: 'Precision Shipping carrier service not found' }); return; }
+
+    const updateRes = await fetch(`https://${shop}/admin/api/${apiVersion}/carrier_services/${existing.id}.json`, {
+      method: 'PUT',
+      headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ carrier_service: { id: existing.id, callback_url: `${appBaseUrl}/carrier-service/rates` } }),
+    });
+    const updateData: any = await updateRes.json();
+    if (!updateRes.ok) { res.status(updateRes.status).json({ error: 'Update failed', details: updateData }); return; }
+
+    console.log('[carrier] Updated callback URL to:', updateData.carrier_service?.callback_url);
+    res.json({ ok: true, carrier_service: updateData.carrier_service });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message ?? 'Update failed' });
+  }
+});
+
+
 export default router;
