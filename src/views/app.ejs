@@ -223,7 +223,7 @@
               <% var parts = []; %>
               <% if (tier.minSubtotal !== undefined) parts.push('Subtotal ≥  + tier.minSubtotal.toFixed(2)); %>
               <% if (tier.maxSubtotal !== undefined) parts.push('Subtotal ≤  + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;"><%= tier.label %></td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line);">
@@ -237,7 +237,7 @@
               <% var parts = []; %>
               <% if (tier.minSubtotal !== undefined) parts.push('Subtotal &ge; $' + tier.minSubtotal.toFixed(2)); %>
               <% if (tier.maxSubtotal !== undefined) parts.push('Subtotal &le; $' + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;">
               <%= tier.carriers.join(' or ') %> <span style="font-weight:400; color:var(--muted);">(cheapest wins)</span>
@@ -1017,7 +1017,7 @@ async function toggleService(chkEl) {
 </html>
  + tier.minSubtotal.toFixed(2)); %>
               <% if (tier.maxSubtotal !== undefined) parts.push('Subtotal &le; $' + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;"><%= tier.label %></td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line);">
@@ -1031,7 +1031,7 @@ async function toggleService(chkEl) {
               <% var parts = []; %>
               <% if (tier.minSubtotal !== undefined) parts.push('Subtotal ≥  + tier.minSubtotal.toFixed(2)); %>
               <% if (tier.maxSubtotal !== undefined) parts.push('Subtotal &le; $' + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;">
               <%= tier.carriers.join(' or ') %> <span style="font-weight:400; color:var(--muted);">(cheapest wins)</span>
@@ -1811,7 +1811,7 @@ async function toggleService(chkEl) {
 </html>
  + tier.minSubtotal.toFixed(2)); %>
               <% if (tier.maxSubtotal !== undefined) parts.push('Subtotal &le; $' + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;">
               <%= tier.carriers.join(' or ') %> <span style="font-weight:400; color:var(--muted);">(cheapest wins)</span>
@@ -2590,7 +2590,7 @@ async function toggleService(chkEl) {
 </body>
 </html>
  + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;"><%= tier.label %></td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line);">
@@ -2604,7 +2604,7 @@ async function toggleService(chkEl) {
               <% var parts = []; %>
               <% if (tier.minSubtotal !== undefined) parts.push('Subtotal &ge; $' + tier.minSubtotal.toFixed(2)); %>
               <% if (tier.maxSubtotal !== undefined) parts.push('Subtotal ≤  + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;">
               <%= tier.carriers.join(' or ') %> <span style="font-weight:400; color:var(--muted);">(cheapest wins)</span>
@@ -3384,7 +3384,7 @@ async function toggleService(chkEl) {
 </html>
  + tier.minSubtotal.toFixed(2)); %>
               <% if (tier.maxSubtotal !== undefined) parts.push('Subtotal &le; $' + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;"><%= tier.label %></td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line);">
@@ -3398,7 +3398,7 @@ async function toggleService(chkEl) {
               <% var parts = []; %>
               <% if (tier.minSubtotal !== undefined) parts.push('Subtotal ≥  + tier.minSubtotal.toFixed(2)); %>
               <% if (tier.maxSubtotal !== undefined) parts.push('Subtotal &le; $' + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;">
               <%= tier.carriers.join(' or ') %> <span style="font-weight:400; color:var(--muted);">(cheapest wins)</span>
@@ -4178,7 +4178,7 @@ async function toggleService(chkEl) {
 </html>
  + tier.minSubtotal.toFixed(2)); %>
               <% if (tier.maxSubtotal !== undefined) parts.push('Subtotal &le; $' + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;">
               <%= tier.carriers.join(' or ') %> <span style="font-weight:400; color:var(--muted);">(cheapest wins)</span>
@@ -4957,7 +4957,7 @@ async function toggleService(chkEl) {
 </body>
 </html>
  + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;">
               <%= tier.carriers.join(' or ') %> <span style="font-weight:400; color:var(--muted);">(cheapest wins)</span>
@@ -5737,7 +5737,7 @@ async function toggleService(chkEl) {
 </html>
  + tier.minSubtotal.toFixed(2)); %>
               <% if (tier.maxSubtotal !== undefined) parts.push('Subtotal ≤  + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;"><%= tier.label %></td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line);">
@@ -5751,7 +5751,7 @@ async function toggleService(chkEl) {
               <% var parts = []; %>
               <% if (tier.minSubtotal !== undefined) parts.push('Subtotal ≥  + tier.minSubtotal.toFixed(2)); %>
               <% if (tier.maxSubtotal !== undefined) parts.push('Subtotal &le; $' + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;">
               <%= tier.carriers.join(' or ') %> <span style="font-weight:400; color:var(--muted);">(cheapest wins)</span>
@@ -6531,7 +6531,7 @@ async function toggleService(chkEl) {
 </html>
  + tier.minSubtotal.toFixed(2)); %>
               <% if (tier.maxSubtotal !== undefined) parts.push('Subtotal &le; $' + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;">
               <%= tier.carriers.join(' or ') %> <span style="font-weight:400; color:var(--muted);">(cheapest wins)</span>
@@ -7310,7 +7310,7 @@ async function toggleService(chkEl) {
 </body>
 </html>
  + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;"><%= tier.label %></td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line);">
@@ -7324,7 +7324,7 @@ async function toggleService(chkEl) {
               <% var parts = []; %>
               <% if (tier.minSubtotal !== undefined) parts.push('Subtotal ≥  + tier.minSubtotal.toFixed(2)); %>
               <% if (tier.maxSubtotal !== undefined) parts.push('Subtotal ≤  + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;">
               <%= tier.carriers.join(' or ') %> <span style="font-weight:400; color:var(--muted);">(cheapest wins)</span>
@@ -8104,7 +8104,7 @@ async function toggleService(chkEl) {
 </html>
  + tier.minSubtotal.toFixed(2)); %>
               <% if (tier.maxSubtotal !== undefined) parts.push('Subtotal &le; $' + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;">
               <%= tier.carriers.join(' or ') %> <span style="font-weight:400; color:var(--muted);">(cheapest wins)</span>
@@ -8883,7 +8883,7 @@ async function toggleService(chkEl) {
 </body>
 </html>
  + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;">
               <%= tier.carriers.join(' or ') %> <span style="font-weight:400; color:var(--muted);">(cheapest wins)</span>
@@ -9663,7 +9663,7 @@ async function toggleService(chkEl) {
 </html>
  + tier.minSubtotal.toFixed(2)); %>
               <% if (tier.maxSubtotal !== undefined) parts.push('Subtotal ≤  + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;">
               <%= tier.carriers.join(' or ') %> <span style="font-weight:400; color:var(--muted);">(cheapest wins)</span>
@@ -10442,7 +10442,7 @@ async function toggleService(chkEl) {
 </body>
 </html>
  + tier.maxSubtotal.toFixed(2)); %>
-              <%= parts.length ? parts.join(' & ') : 'All orders' %>
+              <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;">
               <%= tier.carriers.join(' or ') %> <span style="font-weight:400; color:var(--muted);">(cheapest wins)</span>
