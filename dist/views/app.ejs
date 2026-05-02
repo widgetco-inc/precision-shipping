@@ -71,19 +71,60 @@
       </div>
     </section>
 
-    <section class="card" id="rules">
+    <section cla  <div class="page" id="rules">
+    <section class="card">
       <p class="eyebrow">Rules</p>
-      <h2>Business logic summary</h2>
-      <ul>
-        <li>Use true micro-weight, never rounded catalog weight, for shipment math.</li>
-        <li>USPS Ground Advantage stays under 1 lb.</li>
-        <li>USPS International Mail stays under 4 lb.</li>
-        <li>FedEx express services can use envelope logic under <%= settings.packaging.expressEnvelopeMaxWeightLb %> lb when eligible.</li>
-        <li>Everything else falls back to the enabled parcel services for the destination.</li>
-      </ul>
-    </section>
+      <h2>Shipping Rules by Zone</h2>
+      <p class="muted" style="margin-bottom:20px">These rules are defined in <code>src/config/shippingRules.ts</code>. Edit that file to change thresholds or labels &mdash; no other code needs to change.</p>
 
-    <section class="card sh-card" id="preview">
+      <% zoneRules.forEach(function(zr) { %>
+      <div style="margin-bottom:28px; border:1px solid var(--line); border-radius:12px; overflow:hidden;">
+        <div style="background:var(--bg); padding:10px 16px; border-bottom:1px solid var(--line);">
+          <strong style="font-size:14px"><%= zr.zone %></strong>
+          <% if (zr.rules.suppressCarriers && zr.rules.suppressCarriers.length) { %>
+            <span style="margin-left:10px; font-size:11px; background:#fee2e2; color:#dc2626; border-radius:20px; padding:2px 8px; font-weight:600;">USPS hidden</span>
+          <% } %>
+          <% if (zr.rules.suppressUspsOverSubtotal !== undefined) { %>
+            <span style="margin-left:10px; font-size:11px; background:#fef9c3; color:#ca8a04; border-radius:20px; padding:2px 8px; font-weight:600;">USPS hidden over $<%= zr.rules.suppressUspsOverSubtotal %></span>
+          <% } %>
+        </div>
+        <table style="width:100%; border-collapse:collapse; font-size:13px;">
+          <thead>
+            <tr style="background:var(--bg);">
+              <th style="text-align:left; padding:8px 16px; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); border-bottom:1px solid var(--line); width:30%">Condition</th>
+              <th style="text-align:left; padding:8px 16px; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); border-bottom:1px solid var(--line); width:35%">Label shown at checkout</th>
+              <th style="text-align:left; padding:8px 16px; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); border-bottom:1px solid var(--line)">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% (zr.rules.flatTiers || []).forEach(function(tier) { %>
+            <tr>
+              <td style="padding:10px 16px; border-bottom:1px solid var(--line); color:var(--muted);"><% if (tier.minSubtotal !== undefined && tier.maxSubtotal !== undefined) { %>$<%= tier.minSubtotal.toFixed(2) %> to $<%= tier.maxSubtotal.toFixed(2) %><% } else if (tier.minSubtotal !== undefined) { %>$<%= tier.minSubtotal.toFixed(2) %> and over<% } else if (tier.maxSubtotal !== undefined) { %>Under $<%= tier.maxSubtotal.toFixed(2) %><% } else { %>All orders<% } %></td>
+              <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;"><%= tier.label %></td>
+              <td style="padding:10px 16px; border-bottom:1px solid var(--line);"><% if (tier.price === 0) { %><span style="color:#16a34a; font-weight:700;">Free</span><% } else { %>$<%= tier.price.toFixed(2) %> flat<% } %></td>
+            </tr>
+            <% }); %>
+            <% (zr.rules.calcTiers || []).forEach(function(tier) { %>
+            <tr>
+              <td style="padding:10px 16px; border-bottom:1px solid var(--line); color:var(--muted);"><% if (tier.minSubtotal !== undefined && tier.maxSubtotal !== undefined) { %>$<%= tier.minSubtotal.toFixed(2) %> to $<%= tier.maxSubtotal.toFixed(2) %><% } else if (tier.minSubtotal !== undefined) { %>$<%= tier.minSubtotal.toFixed(2) %> and over<% } else if (tier.maxSubtotal !== undefined) { %>Under $<%= tier.maxSubtotal.toFixed(2) %><% } else { %>All orders<% } %></td>
+              <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;"><%= tier.carriers.join(' or ') %> <span style="font-weight:400; color:var(--muted);">(cheapest wins)</span></td>
+              <td style="padding:10px 16px; border-bottom:1px solid var(--line);"><% if (tier.overridePrice === 0) { %><span style="color:#16a34a; font-weight:700;">Free</span><% } else if (tier.overridePrice !== undefined) { %>$<%= tier.overridePrice.toFixed(2) %><% } else { %>Calculated<% } %></td>
+            </tr>
+            <% }); %>
+            <% if (zr.rules.passThrough && !zr.rules.flatTiers && !zr.rules.calcTiers) { %>
+            <tr>
+              <td style="padding:10px 16px; color:var(--muted);">All orders</td>
+              <td style="padding:10px 16px; font-weight:600;">All carriers (pass-through)</td>
+              <td style="padding:10px 16px;">Calculated by EasyPost</td>
+            </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+      <% }); %>
+    </section>
+  </div>
+   sh-card" id="preview">
       <p class="eyebrow">Preview</p>
       <h2>Test a shipment</h2>
       <form id="pForm" class="preview-form">
