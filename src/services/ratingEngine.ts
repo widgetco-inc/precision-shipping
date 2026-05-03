@@ -56,11 +56,21 @@ export async function buildShipment(
   const province = (destination.provinceCode ?? '').toUpperCase();
   const isHiAkTerritory = isDomestic && hiAkTerritories.includes(province);
 
-  // Box splitting: divide shipment weight across 45 lb boxes
-  const maxLbPerBox = settings.packaging.maxWeightPerBoxLb ?? 45;
+  // Box splitting: check for SKU-specific overrides first, then fall back to global default
+  const overrides = settings.packaging.skuBoxOverrides ?? [];
+  // Find the tightest per-box limit that applies to any line in this order
+  let maxLbPerBox = settings.packaging.maxWeightPerBoxLb ?? 45;
+  for (const line of shipmentLines) {
+    const sku = (line.sku ?? '').toUpperCase();
+    for (const ov of overrides) {
+      if (sku.startsWith(ov.skuPrefix.toUpperCase())) {
+        maxLbPerBox = Math.min(maxLbPerBox, ov.maxWeightPerBoxLb);
+        break;
+      }
+    }
+  }
   const numberOfBoxes = Math.max(1, Math.ceil(totalShipmentWeightLb / maxLbPerBox));
   const heaviestBoxWeightLb = totalShipmentWeightLb / numberOfBoxes;
-
   const eligibleForFedexEnvelope =
     settings.packaging.useFedexEnvelopeForExpress &&
     totalShipmentWeightLb <= settings.packaging.expressEnvelopeMaxWeightLb;
