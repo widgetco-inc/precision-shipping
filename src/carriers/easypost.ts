@@ -189,7 +189,7 @@ async function fetchAllRatesForAccount(
         ...(isResidential ? { residential: true } : {}),
       },
       parcel: {
-        weight: shipment.totalShipmentWeightLb * 16, // oz
+        weight: shipment.heaviestBoxWeightLb * 16, // oz — per-box weight (split across boxes)
         length: 12,
         width: 9,
         height: 4,
