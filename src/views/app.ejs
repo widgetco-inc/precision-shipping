@@ -1016,7 +1016,6 @@ async function toggleService(chkEl) {
               <% if (tier.price === 0) { %><span style="color:#16a34a; font-weight:700;">Free</span><% } else { %>$<%= tier.price.toFixed(2) %> flat<% } %>
             </td>
           </tr>
-          <% }); %>
           <% (zr.rules.calcTiers || []).forEach(function(tier) { %>
           <tr>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); color:var(--muted);">
@@ -1040,7 +1039,6 @@ async function toggleService(chkEl) {
         </tbody>
       </table>
     </div>
-    <% }); %>
   </section>
 </div>
 <div class="page" id="page-preview">
@@ -1807,7 +1805,6 @@ async function toggleService(chkEl) {
               <% if (tier.overridePrice === 0) { %><span style="color:#16a34a; font-weight:700;">Free</span><% } else if (tier.overridePrice !== undefined) { %>$<%= tier.overridePrice.toFixed(2) %><% } else { %>Calculated<% } %>
             </td>
           </tr>
-          <% }); %>
           <% if (zr.rules.passThrough && !zr.rules.flatTiers && !zr.rules.calcTiers) { %>
           <tr>
             <td style="padding:10px 16px; color:var(--muted);">All orders</td>
@@ -1818,7 +1815,6 @@ async function toggleService(chkEl) {
         </tbody>
       </table>
     </div>
-    <% }); %>
   </section>
 </div>
 <div class="page" id="page-preview">
@@ -2583,7 +2579,6 @@ async function toggleService(chkEl) {
               <% if (tier.price === 0) { %><span style="color:#16a34a; font-weight:700;">Free</span><% } else { %>$<%= tier.price.toFixed(2) %> flat<% } %>
             </td>
           </tr>
-          <% }); %>
           <% (zr.rules.calcTiers || []).forEach(function(tier) { %>
           <tr>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); color:var(--muted);">
@@ -2607,7 +2602,6 @@ async function toggleService(chkEl) {
         </tbody>
       </table>
     </div>
-    <% }); %>
   </section>
 </div>
 <div class="page" id="page-preview">
@@ -3372,7 +3366,6 @@ async function toggleService(chkEl) {
               <% if (tier.price === 0) { %><span style="color:#16a34a; font-weight:700;">Free</span><% } else { %>$<%= tier.price.toFixed(2) %> flat<% } %>
             </td>
           </tr>
-          <% }); %>
           <% (zr.rules.calcTiers || []).forEach(function(tier) { %>
           <tr>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); color:var(--muted);">
@@ -3396,7 +3389,6 @@ async function toggleService(chkEl) {
         </tbody>
       </table>
     </div>
-    <% }); %>
   </section>
 </div>
 <div class="page" id="page-preview">
@@ -4163,7 +4155,6 @@ async function toggleService(chkEl) {
               <% if (tier.overridePrice === 0) { %><span style="color:#16a34a; font-weight:700;">Free</span><% } else if (tier.overridePrice !== undefined) { %>$<%= tier.overridePrice.toFixed(2) %><% } else { %>Calculated<% } %>
             </td>
           </tr>
-          <% }); %>
           <% if (zr.rules.passThrough && !zr.rules.flatTiers && !zr.rules.calcTiers) { %>
           <tr>
             <td style="padding:10px 16px; color:var(--muted);">All orders</td>
@@ -4174,7 +4165,6 @@ async function toggleService(chkEl) {
         </tbody>
       </table>
     </div>
-    <% }); %>
   </section>
 </div>
 <div class="page" id="page-preview">
@@ -4941,7 +4931,6 @@ async function toggleService(chkEl) {
               <% if (tier.overridePrice === 0) { %><span style="color:#16a34a; font-weight:700;">Free</span><% } else if (tier.overridePrice !== undefined) { %>$<%= tier.overridePrice.toFixed(2) %><% } else { %>Calculated<% } %>
             </td>
           </tr>
-          <% }); %>
           <% if (zr.rules.passThrough && !zr.rules.flatTiers && !zr.rules.calcTiers) { %>
           <tr>
             <td style="padding:10px 16px; color:var(--muted);">All orders</td>
@@ -4952,7 +4941,6 @@ async function toggleService(chkEl) {
         </tbody>
       </table>
     </div>
-    <% }); %>
   </section>
 </div>
 <div class="page" id="page-preview">
@@ -5717,7 +5705,6 @@ async function toggleService(chkEl) {
               <% if (tier.price === 0) { %><span style="color:#16a34a; font-weight:700;">Free</span><% } else { %>$<%= tier.price.toFixed(2) %> flat<% } %>
             </td>
           </tr>
-          <% }); %>
           <% (zr.rules.calcTiers || []).forEach(function(tier) { %>
           <tr>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); color:var(--muted);">
@@ -5741,7 +5728,6 @@ async function toggleService(chkEl) {
         </tbody>
       </table>
     </div>
-    <% }); %>
   </section>
 </div>
 <div class="page" id="page-preview">
@@ -6508,7 +6494,6 @@ async function toggleService(chkEl) {
               <% if (tier.overridePrice === 0) { %><span style="color:#16a34a; font-weight:700;">Free</span><% } else if (tier.overridePrice !== undefined) { %>$<%= tier.overridePrice.toFixed(2) %><% } else { %>Calculated<% } %>
             </td>
           </tr>
-          <% }); %>
           <% if (zr.rules.passThrough && !zr.rules.flatTiers && !zr.rules.calcTiers) { %>
           <tr>
             <td style="padding:10px 16px; color:var(--muted);">All orders</td>
@@ -6519,7 +6504,6 @@ async function toggleService(chkEl) {
         </tbody>
       </table>
     </div>
-    <% }); %>
   </section>
 </div>
 <div class="page" id="page-preview">
@@ -7284,7 +7268,6 @@ async function toggleService(chkEl) {
               <% if (tier.price === 0) { %><span style="color:#16a34a; font-weight:700;">Free</span><% } else { %>$<%= tier.price.toFixed(2) %> flat<% } %>
             </td>
           </tr>
-          <% }); %>
           <% (zr.rules.calcTiers || []).forEach(function(tier) { %>
           <tr>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); color:var(--muted);">
@@ -7308,7 +7291,6 @@ async function toggleService(chkEl) {
         </tbody>
       </table>
     </div>
-    <% }); %>
   </section>
 </div>
 <div class="page" id="page-preview">
@@ -8075,7 +8057,6 @@ async function toggleService(chkEl) {
               <% if (tier.overridePrice === 0) { %><span style="color:#16a34a; font-weight:700;">Free</span><% } else if (tier.overridePrice !== undefined) { %>$<%= tier.overridePrice.toFixed(2) %><% } else { %>Calculated<% } %>
             </td>
           </tr>
-          <% }); %>
           <% if (zr.rules.passThrough && !zr.rules.flatTiers && !zr.rules.calcTiers) { %>
           <tr>
             <td style="padding:10px 16px; color:var(--muted);">All orders</td>
@@ -8086,7 +8067,6 @@ async function toggleService(chkEl) {
         </tbody>
       </table>
     </div>
-    <% }); %>
   </section>
 </div>
 <div class="page" id="page-preview">
@@ -8853,7 +8833,6 @@ async function toggleService(chkEl) {
               <% if (tier.overridePrice === 0) { %><span style="color:#16a34a; font-weight:700;">Free</span><% } else if (tier.overridePrice !== undefined) { %>$<%= tier.overridePrice.toFixed(2) %><% } else { %>Calculated<% } %>
             </td>
           </tr>
-          <% }); %>
           <% if (zr.rules.passThrough && !zr.rules.flatTiers && !zr.rules.calcTiers) { %>
           <tr>
             <td style="padding:10px 16px; color:var(--muted);">All orders</td>
@@ -8864,7 +8843,6 @@ async function toggleService(chkEl) {
         </tbody>
       </table>
     </div>
-    <% }); %>
   </section>
 </div>
 <div class="page" id="page-preview">
@@ -9631,7 +9609,6 @@ async function toggleService(chkEl) {
               <% if (tier.overridePrice === 0) { %><span style="color:#16a34a; font-weight:700;">Free</span><% } else if (tier.overridePrice !== undefined) { %>$<%= tier.overridePrice.toFixed(2) %><% } else { %>Calculated<% } %>
             </td>
           </tr>
-          <% }); %>
           <% if (zr.rules.passThrough && !zr.rules.flatTiers && !zr.rules.calcTiers) { %>
           <tr>
             <td style="padding:10px 16px; color:var(--muted);">All orders</td>
@@ -9642,7 +9619,6 @@ async function toggleService(chkEl) {
         </tbody>
       </table>
     </div>
-    <% }); %>
   </section>
 </div>
 <div class="page" id="page-preview">
@@ -10409,7 +10385,6 @@ async function toggleService(chkEl) {
               <% if (tier.overridePrice === 0) { %><span style="color:#16a34a; font-weight:700;">Free</span><% } else if (tier.overridePrice !== undefined) { %>$<%= tier.overridePrice.toFixed(2) %><% } else { %>Calculated<% } %>
             </td>
           </tr>
-          <% }); %>
           <% if (zr.rules.passThrough && !zr.rules.flatTiers && !zr.rules.calcTiers) { %>
           <tr>
             <td style="padding:10px 16px; color:var(--muted);">All orders</td>
@@ -10420,7 +10395,6 @@ async function toggleService(chkEl) {
         </tbody>
       </table>
     </div>
-    <% }); %>
   </section>
 </div>
 <div class="page" id="page-preview">
