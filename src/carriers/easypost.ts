@@ -189,7 +189,7 @@ async function fetchAllRatesForAccount(
         ...(isResidential ? { residential: true } : {}),
       },
       parcel: {
-        weight: shipment.heaviestBoxWeightLb * 16, // oz — per-box weight (split across boxes)
+                  weight: shipment.totalShipmentWeightLb * 16, // oz — total shipment weight across all boxes
         length: 12,
         width: 9,
         height: 4,
@@ -208,6 +208,9 @@ async function fetchAllRatesForAccount(
           }],
         },
       } : {}),
+      options: {
+                parcel_count: shipment.numberOfBoxes, // tells FedEx/UPS total number of packages
+      },
       carrier_accounts: [accountId],
     },
   };
@@ -301,7 +304,7 @@ export class EasyPostAdapter implements CarrierAdapter {
               const rawRate = epRate.rate;
               const estDeliveryDays = epRate.estDeliveryDays;
 
-        let finalAmount = rawRate * shipment.numberOfBoxes;
+                let finalAmount = rawRate; // EasyPost rates the full multi-piece shipment via parcel_count
         if (svc.handlingFeeUsd) finalAmount += svc.handlingFeeUsd;
         if (svc.flatRateUsd != null) finalAmount = svc.flatRateUsd;
         if (svc.freeThresholdUsd != null && shipment.totalShipmentWeightLb === 0) finalAmount = 0;
