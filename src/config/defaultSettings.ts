@@ -93,6 +93,7 @@ export const defaultSettings: AppSettings = {
         packageWeightPct: 1.05,
         expressEnvelopeMaxWeightLb: 0.5,
         useFedexEnvelopeForExpress: false,
+    maxWeightPerBoxLb: 45,
     },
     access: {
         allowedAdminEmails: [],
