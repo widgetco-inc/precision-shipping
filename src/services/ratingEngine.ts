@@ -56,6 +56,11 @@ export async function buildShipment(
   const province = (destination.provinceCode ?? '').toUpperCase();
   const isHiAkTerritory = isDomestic && hiAkTerritories.includes(province);
 
+  // Box splitting: divide shipment weight across 45 lb boxes
+  const maxLbPerBox = settings.packaging.maxWeightPerBoxLb ?? 45;
+  const numberOfBoxes = Math.max(1, Math.ceil(totalShipmentWeightLb / maxLbPerBox));
+  const heaviestBoxWeightLb = totalShipmentWeightLb / numberOfBoxes;
+
   const eligibleForFedexEnvelope =
     settings.packaging.useFedexEnvelopeForExpress &&
     totalShipmentWeightLb <= settings.packaging.expressEnvelopeMaxWeightLb;
@@ -72,5 +77,7 @@ export async function buildShipment(
     isInternational,
     isHiAkTerritory,
     eligibleForFedexEnvelope,
+    numberOfBoxes,
+    heaviestBoxWeightLb,
   };
 }
