@@ -105,4 +105,26 @@ export const defaultSettings: AppSettings = {
     access: {
         allowedAdminEmails: [],
     },
+      closureDates: [
+              // ── 2026 US Federal / FedEx+UPS observed holidays ──────────────────────────
+          { date: '2026-01-01', label: "New Year's Day 2026" },
+          { date: '2026-01-19', label: 'Martin Luther King Jr. Day 2026' },
+          { date: '2026-02-16', label: "Presidents' Day 2026" },
+          { date: '2026-05-25', label: 'Memorial Day 2026' },
+          { date: '2026-07-03', label: 'Independence Day (observed) 2026' },
+          { date: '2026-09-07', label: 'Labor Day 2026' },
+          { date: '2026-11-26', label: 'Thanksgiving 2026' },
+          { date: '2026-12-25', label: 'Christmas Day 2026' },
+              // ── 2027 ────────────────────────────────────────────────────────────────────
+          { date: '2027-01-01', label: "New Year's Day 2027" },
+          { date: '2027-01-18', label: 'Martin Luther King Jr. Day 2027' },
+          { date: '2027-02-15', label: "Presidents' Day 2027" },
+          { date: '2027-05-31', label: 'Memorial Day 2027' },
+          { date: '2027-07-05', label: 'Independence Day (observed) 2027' },
+          { date: '2027-09-06', label: 'Labor Day 2027' },
+          { date: '2027-11-25', label: 'Thanksgiving 2027' },
+          { date: '2027-12-24', label: 'Christmas Eve (observed) 2027' },
+          { date: '2027-12-27', label: 'Christmas Day (observed) 2027' },
+            ],
+    },
 };
