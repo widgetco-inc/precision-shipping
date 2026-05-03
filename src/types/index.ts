@@ -26,6 +26,7 @@ export interface PackagingSettings {
   packageWeightPct: number;
   expressEnvelopeMaxWeightLb: number;
   useFedexEnvelopeForExpress: boolean;
+  maxWeightPerBoxLb?: number;
 }
 
 export interface AccessSettings {
@@ -70,6 +71,8 @@ export interface Shipment {
   isInternational: boolean;
   isHiAkTerritory: boolean;
   eligibleForFedexEnvelope: boolean;
+  numberOfBoxes: number;
+  heaviestBoxWeightLb: number;
 }
 
 export interface RateQuote {
