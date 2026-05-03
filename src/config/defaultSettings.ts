@@ -126,5 +126,4 @@ export const defaultSettings: AppSettings = {
           { date: '2027-12-24', label: 'Christmas Eve (observed) 2027' },
           { date: '2027-12-27', label: 'Christmas Day (observed) 2027' },
             ],
-    },
-};
+};    
