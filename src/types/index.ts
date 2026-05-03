@@ -23,10 +23,12 @@ export interface CarrierSettings {
 }
 
 export interface SkuBoxOverride {
-  /** Glob-style prefix: e.g. "6-U" matches any SKU starting with "6-U" */
+  /** SKU prefix to match — e.g. "6-U" matches any SKU starting with "6-U" */
   skuPrefix: string;
-  /** Each matching unit ships in its own box at this weight (lb) */
-  maxWeightPerBoxLb: number;
+  /** If true, every unit ships in its own box (ignores maxWeightPerBoxLb) */
+  shipsIndividually?: boolean;
+  /** Max weight per box in lb — used when shipsIndividually is false/absent */
+  maxWeightPerBoxLb?: number;
 }
 
 export interface PackagingSettings {
