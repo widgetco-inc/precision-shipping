@@ -22,11 +22,19 @@ export interface CarrierSettings {
   services: ServiceRule[];
 }
 
+export interface SkuBoxOverride {
+  /** Glob-style prefix: e.g. "6-U" matches any SKU starting with "6-U" */
+  skuPrefix: string;
+  /** Each matching unit ships in its own box at this weight (lb) */
+  maxWeightPerBoxLb: number;
+}
+
 export interface PackagingSettings {
   packageWeightPct: number;
   expressEnvelopeMaxWeightLb: number;
   useFedexEnvelopeForExpress: boolean;
   maxWeightPerBoxLb?: number;
+  skuBoxOverrides?: SkuBoxOverride[];
 }
 
 export interface AccessSettings {
