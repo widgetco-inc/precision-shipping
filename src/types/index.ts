@@ -43,10 +43,19 @@ export interface AccessSettings {
   allowedAdminEmails: string[];
 }
 
+export interface ClosureDate {
+    /** ISO date string YYYY-MM-DD */
+    date: string;
+    /** Human-readable label e.g. "Thanksgiving 2026" */
+    label: string;
+}
+
 export interface AppSettings {
   carriers: Record<CarrierCode, CarrierSettings>;
   packaging: PackagingSettings;
   access: AccessSettings;
+    /** Warehouse closure dates — used to compute estimated ship/delivery dates */
+    closureDates?: ClosureDate[];
 }
 
 export interface Destination {
