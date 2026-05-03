@@ -56,21 +56,46 @@ export async function buildShipment(
   const province = (destination.provinceCode ?? '').toUpperCase();
   const isHiAkTerritory = isDomestic && hiAkTerritories.includes(province);
 
-  // Box splitting: check for SKU-specific overrides first, then fall back to global default
+  // Box splitting: per-SKU overrides take priority, then global default
   const overrides = settings.packaging.skuBoxOverrides ?? [];
-  // Find the tightest per-box limit that applies to any line in this order
-  let maxLbPerBox = settings.packaging.maxWeightPerBoxLb ?? 45;
+
+  // Check if ANY line matches a shipsIndividually override
+  // If so: numberOfBoxes = total units across all individually-shipping lines,
+  //         heaviestBoxWeightLb = weight of the single heaviest unit
+  let individualBoxCount = 0;
+  let heaviestUnitLb = 0;
   for (const line of shipmentLines) {
     const sku = (line.sku ?? '').toUpperCase();
-    for (const ov of overrides) {
-      if (sku.startsWith(ov.skuPrefix.toUpperCase())) {
-        maxLbPerBox = Math.min(maxLbPerBox, ov.maxWeightPerBoxLb);
-        break;
-      }
+    const match = overrides.find((ov) => ov.shipsIndividually && sku.startsWith(ov.skuPrefix.toUpperCase()));
+    if (match) {
+      individualBoxCount += line.quantity;
+      const unitLb = (line.resolvedWeightGrams * settings.packaging.packageWeightPct) / 453.59237;
+      if (unitLb > heaviestUnitLb) heaviestUnitLb = unitLb;
     }
   }
-  const numberOfBoxes = Math.max(1, Math.ceil(totalShipmentWeightLb / maxLbPerBox));
-  const heaviestBoxWeightLb = totalShipmentWeightLb / numberOfBoxes;
+
+  let numberOfBoxes: number;
+  let heaviestBoxWeightLb: number;
+
+  if (individualBoxCount > 0) {
+    // All items in this order are individually boxed
+    numberOfBoxes = individualBoxCount;
+    heaviestBoxWeightLb = heaviestUnitLb > 0 ? heaviestUnitLb : totalShipmentWeightLb / numberOfBoxes;
+  } else {
+    // No individually-shipping SKUs — use weight-based box splitting
+    let maxLbPerBox = settings.packaging.maxWeightPerBoxLb ?? 45;
+    for (const line of shipmentLines) {
+      const sku = (line.sku ?? '').toUpperCase();
+      for (const ov of overrides) {
+        if (!ov.shipsIndividually && ov.maxWeightPerBoxLb != null && sku.startsWith(ov.skuPrefix.toUpperCase())) {
+          maxLbPerBox = Math.min(maxLbPerBox, ov.maxWeightPerBoxLb);
+          break;
+        }
+      }
+    }
+    numberOfBoxes = Math.max(1, Math.ceil(totalShipmentWeightLb / maxLbPerBox));
+    heaviestBoxWeightLb = totalShipmentWeightLb / numberOfBoxes;
+  }
   const eligibleForFedexEnvelope =
     settings.packaging.useFedexEnvelopeForExpress &&
     totalShipmentWeightLb <= settings.packaging.expressEnvelopeMaxWeightLb;
