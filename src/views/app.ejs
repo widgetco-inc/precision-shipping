@@ -69,7 +69,23 @@
     .services-col { }
     .svc-col-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 8px 0 4px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
     .svc-col-empty { color: var(--muted); font-size: 13px; padding: 6px 0; }
-  </style>
+  
+  /* Individual-box toggle switch */
+  .toggle-switch { position: relative; display: inline-block; width: 36px; height: 20px; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: #d1d5db; border-radius: 20px; transition: .2s;
+  }
+  .toggle-slider:before {
+    content: ""; position: absolute;
+    width: 14px; height: 14px; left: 3px; bottom: 3px;
+    background: white; border-radius: 50%; transition: .2s;
+  }
+  .toggle-switch input:checked + .toggle-slider { background: #86efac; }
+  .toggle-switch input:checked + .toggle-slider:before { transform: translateX(16px); }
+  .toggle-switch input:disabled + .toggle-slider { opacity: 0.5; cursor: wait; }
+</style>
 </head>
 <body>
 <main class="shell">
@@ -398,6 +414,7 @@
               <th>Uploaded Weight (g)</th>
               <th>Shopify Weight (g)</th>
               <th>Status</th>
+              <th>Individual Box</th>
               <th>Remove</th>
             </tr>
           </thead>
@@ -655,6 +672,13 @@ async function loadUploadedWeightsTable() {
       '<td>' + uploaded + ' g</td>' +
       '<td>' + (shopify !== null ? shopify + ' g' : '<span class=\"muted\">\u2014</span>') + '</td>' +
       '<td style="font-size:18px;text-align:center">' + statusHtml + '</td>' +
+      '<td style="text-align:center">' +
+        '<label class="toggle-switch" title="Each unit ships in its own individual box">' +
+          '<input type="checkbox" class="indiv-box-toggle" data-sku="' + escHtml(sku) + '"' +
+          (isIndividualBox(sku) ? ' checked' : '') + '>' +
+          '<span class="toggle-slider"></span>' +
+        '</label>' +
+      '</td>' +
       '<td style="text-align:center"><button class="btn-remove-sku" type="button" data-sku="' + escHtml(sku) + '" title="Remove discontinued SKU" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:3px 7px;border-radius:6px;line-height:1">&#10007;</button></td>' +
       '</tr>';
   });
@@ -694,6 +718,74 @@ document.getElementById('uploadedWeightsTableBody')?.addEventListener('click', a
 loadSyncStatus();
 loadNightlyAlerts();
 loadUploadedWeightsTable();
+</script>
+
+<script>
+// ── Individual-box SKU overrides ──────────────────────────────────────────
+let _skuBoxOverrides = [];
+
+async function loadSkuBoxOverrides() {
+  try {
+    const r = await fetch('/api/settings');
+    const s = await r.json();
+    _skuBoxOverrides = (s.packaging && s.packaging.skuBoxOverrides) ? s.packaging.skuBoxOverrides : [];
+  } catch (e) {
+    console.warn('[indiv-box] failed to load settings', e);
+  }
+}
+
+function isIndividualBox(sku) {
+  const upper = (sku || '').toUpperCase();
+  return _skuBoxOverrides.some(function(ov) {
+    return ov.shipsIndividually && upper.startsWith(ov.skuPrefix.toUpperCase());
+  });
+}
+
+async function setIndividualBox(sku, enabled) {
+  try {
+    const r = await fetch('/api/settings');
+    const s = await r.json();
+    if (!s.packaging.skuBoxOverrides) s.packaging.skuBoxOverrides = [];
+    const overrides = s.packaging.skuBoxOverrides;
+    const idx = overrides.findIndex(function(ov) {
+      return ov.skuPrefix.toUpperCase() === sku.toUpperCase();
+    });
+    if (enabled) {
+      // Remove any existing entry for this SKU then add with shipsIndividually
+      if (idx !== -1) overrides.splice(idx, 1);
+      overrides.push({ skuPrefix: sku, shipsIndividually: true });
+    } else {
+      // Remove if present
+      if (idx !== -1) overrides.splice(idx, 1);
+    }
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(s),
+    });
+    _skuBoxOverrides = overrides;
+  } catch (e) {
+    console.error('[indiv-box] save failed', e);
+    alert('Failed to save individual box setting. Please try again.');
+  }
+}
+
+// Wire up toggle clicks via event delegation on the uploaded weights table
+document.addEventListener('change', function(e) {
+  if (!e.target.classList.contains('indiv-box-toggle')) return;
+  const sku = e.target.dataset.sku;
+  const enabled = e.target.checked;
+  e.target.disabled = true;
+  setIndividualBox(sku, enabled).finally(function() {
+    e.target.disabled = false;
+  });
+});
+
+// Load overrides on page load so toggles render correctly
+loadSkuBoxOverrides().then(function() {
+  // Re-render the uploaded weights table so toggles show the correct state
+  loadUploadedWeightsTable();
+});
 </script>
 
 <script>
