@@ -94,6 +94,9 @@ export const defaultSettings: AppSettings = {
         expressEnvelopeMaxWeightLb: 0.5,
         useFedexEnvelopeForExpress: false,
     maxWeightPerBoxLb: 45,
+    skuBoxOverrides: [
+      { skuPrefix: '6-U', maxWeightPerBoxLb: 25 },
+    ],
     },
     access: {
         allowedAdminEmails: [],
