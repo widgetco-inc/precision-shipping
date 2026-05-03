@@ -2,7 +2,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WidgetCo Precision Shipping</title>
+  <title>WidgetCo Precision Shipping</title
   <link rel="stylesheet" href="/styles.css" />
   <style>
     .est-section { margin-top: 20px; }
@@ -822,7 +822,7 @@ loadSkuBoxOverrides().then(function() {
     const H = parseFloat(document.getElementById('estBoxH').value) || 0;
     const boxEl = document.getElementById('estBoxDimDisplay');
     if (L > 0 && W > 0 && H > 0) {
-      document.getElementById('estBoxDimText').textContent = L + '×' + W + '×' + H + ' in';
+      document.getElementById('estBoxDimText').textContent = L + '×' + W + '×' + H;
       boxEl.style.display = '';
     } else { boxEl.style.display = 'none'; }
   }
@@ -935,7 +935,7 @@ loadSkuBoxOverrides().then(function() {
         html += '<div class="est-results-summary"><table>';
         if (fromZip) html += '<tr><td>From</td><td>' + esc(fromZip) + '</td></tr>';
         html += '<tr><td>To</td><td>' + esc((zip || '—') + ', ' + cc) + '</td></tr>';
-        if (L > 0 && W > 0 && H > 0) html += '<tr><td>Box</td><td>' + L + ' × ' + W + ' × ' + H + ' in</td></tr>';
+        if (L > 0 && W > 0 && H > 0) html += '<tr><td>Box</td><td>' + L + ' × ' + W + ' × ' + H + '</td></tr>';
         html += '<tr><td>Items</td><td>' + lines.reduce((a, l) => a + l.quantity, 0).toLocaleString() + '</td></tr>';
         html += '<tr><td>Item weight</td><td>' + (s.totalItemWeightGrams?.toFixed(2) ?? '—') + ' g (' + ((s.totalItemWeightGrams ?? 0) / 453.592).toFixed(4) + ' lb)</td></tr>';
         html += '<tr><td>Package weight (5%)</td><td>' + (s.packageWeightGrams?.toFixed(2) ?? '—') + ' g (' + ((s.packageWeightGrams ?? 0) / 453.592).toFixed(4) + ' lb)</td></tr>';
@@ -953,7 +953,44 @@ loadSkuBoxOverrides().then(function() {
           html += '<span class="est-rate-carrier"><img src="https://assets.easypost.com/assets/images/carrier-logos/' + r.carrier.toLowerCase() + '.png" alt="' + esc(r.carrier.toUpperCase()) + '" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'' + esc(r.carrier.toUpperCase()) + '\'"></span>';
           html += '<span class="est-rate-service">' + esc(r.serviceName || r.service || '') + '</span>';
           
-          html += '<span class="est-rate-days">' + (r.estDeliveryDays != null ? r.estDeliveryDays + ' day' + (r.estDeliveryDays !== 1 ? 's' : '') : '—') + '</span>';html += '<span class="est-rate-price">' + esc(price) + '</span>';
+            (function() {
+              // FedEx/UPS observed holidays (M/D) — weekends auto-skipped
+              const bizHolidays = [
+                '1/1','1/19','5/25','7/4','8/31','11/26','12/25', // 2026
+                '1/1','1/18','5/31','7/5','9/6','11/25','12/24', // 2027
+              ];
+              function nextBizDay(d) {
+                const nd = new Date(d);
+                while (true) {
+                  const dow = nd.getDay();
+                  if (dow === 0 || dow === 6) { nd.setDate(nd.getDate()+1); continue; }
+                  if (bizHolidays.includes((nd.getMonth()+1)+'/'+nd.getDate())) { nd.setDate(nd.getDate()+1); continue; }
+                  break;
+                }
+                return nd;
+              }
+              function addBizDays(start, n) {
+                const d = new Date(start); let c = 0;
+                while (c < n) {
+                  d.setDate(d.getDate()+1);
+                  const dow = d.getDay();
+                  if (dow === 0 || dow === 6) continue;
+                  if (bizHolidays.includes((d.getMonth()+1)+'/'+d.getDate())) continue;
+                  c++;
+                }
+                return d;
+              }
+              if (r.estDeliveryDays != null) {
+                const ship = nextBizDay(new Date());
+                const arr = addBizDays(ship, r.estDeliveryDays);
+                const dn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+                const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                const lbl = r.estDeliveryDays + ' day' + (r.estDeliveryDays !== 1 ? 's' : '') + ' (' + dn[arr.getDay()] + ' ' + mn[arr.getMonth()] + ' ' + arr.getDate() + ')';
+                html += '<span class="est-rate-days">' + lbl + '</span>';
+              } else {
+                html += '<span class="est-rate-days">—</span>';
+              }
+            })();
           html += '</div>';
         });
         html += '</div>';
