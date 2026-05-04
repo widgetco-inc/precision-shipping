@@ -1264,7 +1264,6 @@ function savePackagingFactor() {
 // ── Orders ─────────────────────────────────────────────────────────────────
 async function loadOrders() {
   const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const list    = document.getElementById('orders-list');
   const loading = document.getElementById('orders-state-loading');
   const empty   = document.getElementById('orders-state-empty');
