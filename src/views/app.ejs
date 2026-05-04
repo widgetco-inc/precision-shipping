@@ -86,6 +86,13 @@
   .toggle-switch input:checked + .toggle-slider { background: #86efac; }
   .toggle-switch input:checked + .toggle-slider:before { transform: translateX(16px); }
   .toggle-switch input:disabled + .toggle-slider { opacity: 0.5; cursor: wait; }
+    /* Package selector */
+    .pkg-selector-row { margin-bottom: .75rem; }
+    .pkg-select { width: 100%; padding: .45rem .6rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: .85rem; background: #fff; }
+    .grid.four { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: .75rem; }
+    .btn-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
+    .btn-danger:hover { background: #fee2e2; }
+    .muted-desc { color: #6b7280; font-size: .875rem; margin-top: -.25rem; margin-bottom: 1rem; }
 </style>
 <script>
 // ── Shipping Schedule & Holiday Data (single source of truth) ───────────────
@@ -133,6 +140,7 @@ const SHIP_SCHEDULE = [
       <a href="#weights" class="nav-link">Item True Weights</a>
       <a href="#access" class="nav-link">Access</a>
       <a href="#orders" class="nav-link">Orders</a>
+      <a href="#packages" class="nav-link">Packages</a>
     </nav>
   </aside>
 
@@ -457,7 +465,13 @@ const SHIP_SCHEDULE = [
         </div>
 
         <div class="est-section">
-          <p class="est-section-label">Box size <span class="muted">(optional — inches)</span></p>
+                  <p class="est-section-label">Package <span class="muted">(optional — select to auto-fill dimensions)</span></p>
+        <div class="pkg-selector-row">
+          <select id="estPkgSelect" class="pkg-select">
+            <option value="">— Manual / enter dimensions below —</option>
+          </select>
+        </div>
+        <p class="est-section-label">Box size <span class="muted">(optional — inches)</span></p>
           <div class="grid three">
             <label class="est-label">
               <span class="est-label-text">Length</span>
@@ -589,7 +603,67 @@ const SHIP_SCHEDULE = [
       </section>
     </div>
 
-    <div class="page" id="page-orders">
+        <div class="page" id="page-packages">
+      <section class="card">
+        <div class="card-label">PACKAGES</div>
+        <h2>Package Library</h2>
+        <p class="muted-desc">Save your box sizes here. Pick them from the dropdown in the Rate Estimator to auto-fill dimensions.</p>
+
+        <div id="packages-toolbar" class="orders-toolbar" style="margin-bottom:1rem">
+          <button class="btn-small btn-primary" onclick="showAddPackageForm()">+ Add Package</button>
+        </div>
+
+        <!-- Add / edit form (hidden by default) -->
+        <div id="pkg-form-wrapper" style="display:none;margin-bottom:1.5rem">
+          <div class="card" style="padding:1rem 1.25rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px">
+            <h4 id="pkg-form-title" style="margin:0 0 .75rem">Add Package</h4>
+            <div class="grid four" style="gap:.75rem;align-items:end">
+              <label class="est-label">
+                <span class="est-label-text">Name</span>
+                <input id="pkgFormName" type="text" placeholder="e.g. Small Box" style="width:100%" />
+              </label>
+              <label class="est-label">
+                <span class="est-label-text">Length (in)</span>
+                <input id="pkgFormL" type="number" step="0.1" min="0.1" placeholder="12" style="width:100%" />
+              </label>
+              <label class="est-label">
+                <span class="est-label-text">Width (in)</span>
+                <input id="pkgFormW" type="number" step="0.1" min="0.1" placeholder="8" style="width:100%" />
+              </label>
+              <label class="est-label">
+                <span class="est-label-text">Height (in)</span>
+                <input id="pkgFormH" type="number" step="0.1" min="0.1" placeholder="4" style="width:100%" />
+              </label>
+            </div>
+            <div style="margin-top:.75rem;display:flex;gap:.5rem">
+              <button class="btn-small btn-primary" onclick="savePackage()">Save</button>
+              <button class="btn-small" onclick="cancelPackageForm()">Cancel</button>
+            </div>
+            <p id="pkg-form-error" style="color:#dc2626;font-size:.8rem;margin:.5rem 0 0;display:none"></p>
+          </div>
+        </div>
+
+        <!-- Package table -->
+        <div id="pkg-table-wrapper">
+          <table class="weights-table" style="width:100%">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Length</th>
+                <th>Width</th>
+                <th>Height</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="pkg-table-body">
+              <tr><td colspan="5" style="text-align:center;color:#888;padding:1.5rem">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+<div class="page" id="page-orders">
       <section class="card">
         <p class="eyebrow">Orders</p>
         <h2>Unfulfilled Orders</h2>
@@ -1242,7 +1316,7 @@ function savePackagingFactor() {
 <script>
 // ── Page router ──────────────────────────────────────────────────────────────
 (function() {
-  const PAGES = ['overview','methods','rules','preview','weights','access','orders'];
+  const PAGES = ['overview','methods','rules','preview','weights','access','orders','packages'];
   const DEFAULT = 'overview';
 
   function getPage() {
@@ -1356,10 +1430,171 @@ async function loadOrders() {
       window._ordersLoaded = true;
       loadOrders();
     }
+    if (location.hash === '#packages' && !window._packagesLoaded) {
+      window._packagesLoaded = true;
+      loadPackages();
+    }
   });
   if (location.hash === '#orders') loadOrders();
+  if (location.hash === '#packages') loadPackages();
 })();
 
+
+    // ── Packages Page ────────────────────────────────────────────────────────
+    let _packages = [];
+    let _editPkgId = null;
+
+    async function loadPackages() {
+      try {
+        const r = await fetch('/api/packages');
+        const data = await r.json();
+        _packages = Array.isArray(data) ? data : [];
+        renderPackageTable();
+        populatePkgDropdown();
+      } catch(e) {
+        console.error('[packages] load error', e);
+      }
+    }
+
+    function renderPackageTable() {
+      const tbody = document.getElementById('pkg-table-body');
+      if (!tbody) return;
+      if (_packages.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:1.5rem">No packages yet. Click + Add Package to get started.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = _packages.map(p =>
+        '<tr>' +
+        '<td>' + esc(p.name) + '</td>' +
+        '<td>' + p.length_in + '"</td>' +
+        '<td>' + p.width_in + '"</td>' +
+        '<td>' + p.height_in + '"</td>' +
+        '<td style="text-align:right">' +
+          '<button class="btn-small" style="margin-right:.35rem" onclick="editPackage(' + p.id + ')">Edit</button>' +
+          '<button class="btn-small btn-danger" onclick="deletePackage(' + p.id + ')">Delete</button>' +
+        '</td>' +
+        '</tr>'
+      ).join('');
+    }
+
+    function populatePkgDropdown() {
+      const sel = document.getElementById('estPkgSelect');
+      if (!sel) return;
+      const prev = sel.value;
+      sel.innerHTML = '<option value="">— Manual / enter dimensions below —</option>';
+      _packages.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name + '  (' + p.length_in + ' × ' + p.width_in + ' × ' + p.height_in + ' in)';
+        sel.appendChild(opt);
+      });
+      if (prev) sel.value = prev;
+    }
+
+    // Estimator dropdown → auto-fill L×W×H
+    document.addEventListener('DOMContentLoaded', function() {
+      var sel = document.getElementById('estPkgSelect');
+      if (sel) {
+        sel.addEventListener('change', function() {
+          var pkg = _packages.find(p => String(p.id) === sel.value);
+          var lEl = document.getElementById('estBoxL');
+          var wEl = document.getElementById('estBoxW');
+          var hEl = document.getElementById('estBoxH');
+          if (pkg && lEl && wEl && hEl) {
+            lEl.value = pkg.length_in;
+            wEl.value = pkg.width_in;
+            hEl.value = pkg.height_in;
+          } else if (!pkg && lEl && wEl && hEl) {
+            lEl.value = '';
+            wEl.value = '';
+            hEl.value = '';
+          }
+        });
+      }
+      // Load packages on startup for estimator dropdown
+      loadPackages();
+    });
+
+    function showAddPackageForm() {
+      _editPkgId = null;
+      document.getElementById('pkg-form-title').textContent = 'Add Package';
+      document.getElementById('pkgFormName').value = '';
+      document.getElementById('pkgFormL').value = '';
+      document.getElementById('pkgFormW').value = '';
+      document.getElementById('pkgFormH').value = '';
+      document.getElementById('pkg-form-error').style.display = 'none';
+      document.getElementById('pkg-form-wrapper').style.display = '';
+      document.getElementById('pkgFormName').focus();
+    }
+
+    function editPackage(id) {
+      var pkg = _packages.find(p => p.id === id);
+      if (!pkg) return;
+      _editPkgId = id;
+      document.getElementById('pkg-form-title').textContent = 'Edit Package';
+      document.getElementById('pkgFormName').value = pkg.name;
+      document.getElementById('pkgFormL').value = pkg.length_in;
+      document.getElementById('pkgFormW').value = pkg.width_in;
+      document.getElementById('pkgFormH').value = pkg.height_in;
+      document.getElementById('pkg-form-error').style.display = 'none';
+      document.getElementById('pkg-form-wrapper').style.display = '';
+      document.getElementById('pkgFormName').focus();
+    }
+
+    function cancelPackageForm() {
+      document.getElementById('pkg-form-wrapper').style.display = 'none';
+      _editPkgId = null;
+    }
+
+    async function savePackage() {
+      var name = document.getElementById('pkgFormName').value.trim();
+      var l = document.getElementById('pkgFormL').value;
+      var w = document.getElementById('pkgFormW').value;
+      var h = document.getElementById('pkgFormH').value;
+      var errEl = document.getElementById('pkg-form-error');
+      errEl.style.display = 'none';
+
+      if (!name || !l || !w || !h) {
+        errEl.textContent = 'All fields are required.';
+        errEl.style.display = '';
+        return;
+      }
+
+      try {
+        var url = _editPkgId ? '/api/packages/' + _editPkgId : '/api/packages';
+        var method = _editPkgId ? 'PUT' : 'POST';
+        var r = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name, length_in: parseFloat(l), width_in: parseFloat(w), height_in: parseFloat(h) })
+        });
+        var data = await r.json();
+        if (data.error) {
+          errEl.textContent = data.error;
+          errEl.style.display = '';
+          return;
+        }
+        cancelPackageForm();
+        await loadPackages();
+      } catch(e) {
+        errEl.textContent = 'Save failed: ' + e.message;
+        errEl.style.display = '';
+      }
+    }
+
+    async function deletePackage(id) {
+      if (!confirm('Delete this package?')) return;
+      try {
+        var r = await fetch('/api/packages/' + id, { method: 'DELETE' });
+        var data = await r.json();
+        if (data.error) { alert(data.error); return; }
+        await loadPackages();
+      } catch(e) {
+        alert('Delete failed: ' + e.message);
+      }
+    }
+
+    if (location.hash === '#packages') loadPackages();
 </script>
 </body>
 </html>
