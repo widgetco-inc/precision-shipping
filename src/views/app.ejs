@@ -948,7 +948,21 @@ loadSkuBoxOverrides().then(function() {
       if (data.rates && data.rates.length) {
         html += '<div class="est-rates-label">Carrier Rates</div>';
         html += '<div class="est-rates-list">';
+                // Bucket rates: cheapest Ground, cheapest 2-Day, cheapest 2 Next-Day
+        var _ground = [], _twoDay = [], _nextDay = [];
         data.rates.forEach(function(r) {
+          var sc = r.serviceCode || '';
+          if (['FEDEX_GROUND','GROUND_HOME_DELIVERY','GROUND','GROUND_SAVER'].indexOf(sc) >= 0) { _ground.push(r); }
+          else if (['FEDEX_2_DAY','SECOND_DAY_AIR'].indexOf(sc) >= 0) { _twoDay.push(r); }
+          else if (['PRIORITY_OVERNIGHT','STANDARD_OVERNIGHT','NEXT_DAY_AIR','NEXT_DAY_AIR_SAVER','FIRST_OVERNIGHT'].indexOf(sc) >= 0) { _nextDay.push(r); }
+        });
+        function _cheapest(arr) { return arr.slice().sort(function(a,b){return (a.amountUsd||0)-(b.amountUsd||0);})[0]; }
+        var _shown = [];
+        var _g = _cheapest(_ground); if (_g) _shown.push(_g);
+        var _t = _cheapest(_twoDay); if (_t) _shown.push(_t);
+        _nextDay.sort(function(a,b){return (a.amountUsd||0)-(b.amountUsd||0);});
+        _shown = _shown.concat(_nextDay.slice(0,2));
+        _shown.forEach(function(r) {
           const price = r.amountUsd != null ? '$' + r.amountUsd.toFixed(2) : '—';
           html += '<div class="est-rate-card">';
           html += '<span class="est-rate-carrier"><img src="https://assets.easypost.com/assets/images/carrier-logos/' + r.carrier.toLowerCase() + '.png" alt="' + esc(r.carrier.toUpperCase()) + '" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'' + esc(r.carrier.toUpperCase()) + '\'"></span>';
@@ -994,6 +1008,7 @@ loadSkuBoxOverrides().then(function() {
             })();
           html += '<span class="est-rate-price">' + esc(price) + '</span>';
           html += '</div>';
+        
         });
         html += '</div>';
       } else if (data.rates) {
