@@ -108,11 +108,11 @@ const BIZ_HOLIDAYS = [
   { date: '12/24', label: 'Christmas (observed)' },
 ];
 const SHIP_SCHEDULE = [
-  { day: 'Monday',    ships: true,  cutoff: '2:00 PM' },
-  { day: 'Tuesday',   ships: true,  cutoff: '2:00 PM' },
-  { day: 'Wednesday', ships: true,  cutoff: '2:00 PM' },
-  { day: 'Thursday',  ships: true,  cutoff: '2:00 PM' },
-  { day: 'Friday',    ships: true,  cutoff: '2:00 PM' },
+  { day: 'Monday',    ships: true,  cutoff: '4:00 PM CST' },
+  { day: 'Tuesday',   ships: true,  cutoff: '4:00 PM CST' },
+  { day: 'Wednesday', ships: true,  cutoff: '4:00 PM CST' },
+  { day: 'Thursday',  ships: true,  cutoff: '4:00 PM CST' },
+  { day: 'Friday',    ships: true,  cutoff: '4:00 PM CST' },
   { day: 'Saturday',  ships: false, cutoff: null },
   { day: 'Sunday',    ships: false, cutoff: null },
 ];
@@ -317,7 +317,8 @@ const SHIP_SCHEDULE = [
         <tr>
           <th style="text-align:left;padding:6px 12px 6px 0;border-bottom:2px solid var(--line);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em">Day</th>
           <th style="text-align:left;padding:6px 12px 6px 0;border-bottom:2px solid var(--line);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em">Ships?</th>
-          <th style="text-align:left;padding:6px 0 6px 0;border-bottom:2px solid var(--line);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em">Cutoff</th>
+          <th style="text-align:left;padding:6px 12px 6px 0;border-bottom:2px solid var(--line);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em">Cutoff</th>
+          <th style="text-align:left;padding:6px 0 6px 0;border-bottom:2px solid var(--line);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em">Toggle</th>
         </tr>
       </thead>
       <tbody id="schedule-tbody"></tbody>
@@ -337,46 +338,75 @@ const SHIP_SCHEDULE = [
     </table>
 
     <script>
+    // ── Toggle CSS (injected once) ────────────────────────────────────────
+    (function injectToggleStyles() {
+      if (document.getElementById('toggle-css')) return;
+      var style = document.createElement('style');
+      style.id = 'toggle-css';
+      style.textContent = [
+        '.sw-wrap{display:inline-flex;align-items:center;cursor:pointer;user-select:none}',
+        '.sw-track{width:36px;height:20px;border-radius:10px;background:#d1d5db;transition:background .2s;flex-shrink:0;position:relative}',
+        '.sw-track.on{background:var(--accent,#111827)}',
+        '.sw-thumb{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}',
+        '.sw-track.on .sw-thumb{transform:translateX(16px)}'
+      ].join('');
+      document.head.appendChild(style);
+    })();
+
+    // ── Render schedule row ───────────────────────────────────────────────
+    function renderScheduleRow(i, row, sbody) {
+      var existingTr = sbody.querySelector('[data-day-idx="' + i + '"]');
+      var tr = existingTr || document.createElement('tr');
+      tr.setAttribute('data-day-idx', i);
+      tr.innerHTML =
+        '<td style="padding:7px 12px 7px 0;border-bottom:1px solid var(--line);color:var(--text);font-weight:500">' + row.day + '</td>' +
+        '<td style="padding:7px 12px 7px 0;border-bottom:1px solid var(--line)">' +
+          (row.ships
+            ? '<span style="color:var(--pill-on-text,#166534);font-weight:600">Yes</span>'
+            : '<span style="color:var(--muted)">Closed</span>') +
+        '</td>' +
+        '<td style="padding:7px 12px 7px 0;border-bottom:1px solid var(--line);color:var(--text)">' +
+          (row.cutoff || '<span style="color:var(--muted)">—</span>') +
+        '</td>' +
+        '<td style="padding:7px 0 7px 0;border-bottom:1px solid var(--line)">' +
+          '<label class="sw-wrap" title="Toggle ' + row.day + ' shipping">' +
+            '<div class="sw-track' + (row.ships ? ' on' : '') + '" id="sw-track-' + i + '">' +
+              '<div class="sw-thumb"></div>' +
+            '</div>' +
+          '</label>' +
+        '</td>';
+      if (!existingTr) sbody.appendChild(tr);
+      // Wire click after render
+      var track = tr.querySelector('.sw-track');
+      if (track) {
+        track.onclick = function() { window.toggleShipDay(i); };
+      }
+    }
+
+    // ── Toggle a shipping day on/off ──────────────────────────────────────
+    window.toggleShipDay = function(i) {
+      SHIP_SCHEDULE[i].ships = !SHIP_SCHEDULE[i].ships;
+      // Re-render the row
+      var sbody = document.getElementById('schedule-tbody');
+      if (sbody) renderScheduleRow(i, SHIP_SCHEDULE[i], sbody);
+      // Sync the estimator's bizHolidays reference (no page reload needed)
+      // The estimator re-computes bizHolidays fresh on each "Get Rates" click,
+      // so no action needed here — SHIP_SCHEDULE is already updated in memory.
+    };
+
+    // ── Build schedule table on load ─────────────────────────────────────
     (function() {
-      // Build schedule table
       var sbody = document.getElementById('schedule-tbody');
       if (sbody) {
-        SHIP_SCHEDULE.forEach(function(row) {
-          var tr = document.createElement('tr');
-          tr.innerHTML =
-            '<td style="padding:7px 12px 7px 0;border-bottom:1px solid var(--line);color:var(--text);font-weight:500">' + row.day + '</td>' +
-            '<td style="padding:7px 12px 7px 0;border-bottom:1px solid var(--line)">' +
-              (row.ships
-                ? '<span style="color:var(--pill-on-text);font-weight:600">Yes</span>'
-                : '<span style="color:var(--muted)">Closed</span>') +
-            '</td>' +
-            '<td style="padding:7px 0 7px 0;border-bottom:1px solid var(--line);color:var(--text)">' +
-              (row.cutoff || '<span style="color:var(--muted)">—</span>') +
-            '</td>';
-          sbody.appendChild(tr);
+        SHIP_SCHEDULE.forEach(function(row, i) {
+          renderScheduleRow(i, row, sbody);
         });
       }
 
-      // Build holidays table
+      // ── Build holidays table ──────────────────────────────────────────
       var hbody = document.getElementById('holidays-tbody');
       if (hbody) {
-        // Parse dates to get year and formatted date
-        var now = new Date();
-        var currentYear = now.getFullYear();
-        var years = {};
-        BIZ_HOLIDAYS.forEach(function(h) {
-          var parts = h.date.split('/');
-          var month = parseInt(parts[0], 10);
-          var day = parseInt(parts[1], 10);
-          // Determine year: assign sequentially (2026 first 7, 2027 next 7)
-          // We'll track by matching the known holiday sequence
-          // Use a running year-counter approach: reset when month goes backward
-          var key = h.date + '|' + h.label;
-          years[key] = (years[key] || 0); // placeholder
-        });
-
-        // Simpler: we know the structure — 7 holidays for 2026, 7 for 2027
-        var yearLabels = [2026,2026,2026,2026,2026,2026,2026, 2027,2027,2027,2027,2027,2027,2027];
+        var yearLabels = [2026,2026,2026,2026,2026,2026,2026,2027,2027,2027,2027,2027,2027,2027];
         BIZ_HOLIDAYS.forEach(function(h, i) {
           var year = yearLabels[i] || '';
           var parts = h.date.split('/');
@@ -385,7 +415,6 @@ const SHIP_SCHEDULE = [
           var dateObj = new Date(year, month - 1, day);
           var formatted = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
           var tr = document.createElement('tr');
-          var isThisYear = (year === currentYear);
           tr.innerHTML =
             '<td style="padding:7px 12px 7px 0;border-bottom:1px solid var(--line);color:var(--muted)">' + year + '</td>' +
             '<td style="padding:7px 12px 7px 0;border-bottom:1px solid var(--line);color:var(--text)">' + formatted + '</td>' +
@@ -1096,7 +1125,7 @@ loadSkuBoxOverrides().then(function() {
                 const nd = new Date(d);
                 while (true) {
                   const dow = nd.getDay();
-                  if (dow === 0 || dow === 6) { nd.setDate(nd.getDate()+1); continue; }
+                  if (!SHIP_SCHEDULE[(dow + 6) % 7].ships) { nd.setDate(nd.getDate()+1); continue; }
                   if (bizHolidays.includes((nd.getMonth()+1)+'/'+nd.getDate())) { nd.setDate(nd.getDate()+1); continue; }
                   break;
                 }
@@ -1107,7 +1136,7 @@ loadSkuBoxOverrides().then(function() {
                 while (c < n) {
                   d.setDate(d.getDate()+1);
                   const dow = d.getDay();
-                  if (dow === 0 || dow === 6) continue;
+                  if (!SHIP_SCHEDULE[(dow + 6) % 7].ships) continue;
                   if (bizHolidays.includes((d.getMonth()+1)+'/'+d.getDate())) continue;
                   c++;
                 }
