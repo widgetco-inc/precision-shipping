@@ -87,6 +87,36 @@
   .toggle-switch input:checked + .toggle-slider:before { transform: translateX(16px); }
   .toggle-switch input:disabled + .toggle-slider { opacity: 0.5; cursor: wait; }
 </style>
+<script>
+// ── Shipping Schedule & Holiday Data (single source of truth) ───────────────
+const BIZ_HOLIDAYS = [
+  // 2026 — FedEx/UPS observed holidays
+  { date: '1/1',   label: "New Year's Day" },
+  { date: '1/19',  label: 'MLK Jr. Day' },
+  { date: '5/25',  label: 'Memorial Day' },
+  { date: '7/4',   label: 'Independence Day' },
+  { date: '8/31',  label: 'Labor Day' },
+  { date: '11/26', label: 'Thanksgiving' },
+  { date: '12/25', label: 'Christmas' },
+  // 2027 — FedEx/UPS observed holidays
+  { date: '1/1',   label: "New Year's Day" },
+  { date: '1/18',  label: 'MLK Jr. Day' },
+  { date: '5/31',  label: 'Memorial Day' },
+  { date: '7/5',   label: 'Independence Day (observed)' },
+  { date: '9/6',   label: 'Labor Day' },
+  { date: '11/25', label: 'Thanksgiving' },
+  { date: '12/24', label: 'Christmas (observed)' },
+];
+const SHIP_SCHEDULE = [
+  { day: 'Monday',    ships: true,  cutoff: '2:00 PM' },
+  { day: 'Tuesday',   ships: true,  cutoff: '2:00 PM' },
+  { day: 'Wednesday', ships: true,  cutoff: '2:00 PM' },
+  { day: 'Thursday',  ships: true,  cutoff: '2:00 PM' },
+  { day: 'Friday',    ships: true,  cutoff: '2:00 PM' },
+  { day: 'Saturday',  ships: false, cutoff: null },
+  { day: 'Sunday',    ships: false, cutoff: null },
+];
+</script>
 </head>
 <body>
 <main class="shell">
@@ -275,6 +305,97 @@
       </table>
     </div>
     <% }); %>
+
+  <!-- Shipping Schedule & Holidays -->
+  <section class="card" style="margin-top:24px">
+    <p class="eyebrow">Shipping Schedule</p>
+    <h2>Daily Cutoff &amp; Holidays</h2>
+    <p class="muted" style="margin-bottom:20px">Orders must be placed before the cutoff to ship same day. Weekends and carrier-observed holidays are skipped when calculating estimated delivery dates.</p>
+
+    <table class="rules-schedule-table" style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:28px">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:6px 12px 6px 0;border-bottom:2px solid var(--line);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em">Day</th>
+          <th style="text-align:left;padding:6px 12px 6px 0;border-bottom:2px solid var(--line);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em">Ships?</th>
+          <th style="text-align:left;padding:6px 0 6px 0;border-bottom:2px solid var(--line);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em">Cutoff</th>
+        </tr>
+      </thead>
+      <tbody id="schedule-tbody"></tbody>
+    </table>
+
+    <p class="eyebrow" style="margin-top:0">Carrier Holidays</p>
+    <p class="muted" style="margin-bottom:16px;font-size:13px">FedEx &amp; UPS observed holidays — no pickups on these dates.</p>
+    <table class="rules-holidays-table" style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:6px 12px 6px 0;border-bottom:2px solid var(--line);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em">Year</th>
+          <th style="text-align:left;padding:6px 12px 6px 0;border-bottom:2px solid var(--line);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em">Date</th>
+          <th style="text-align:left;padding:6px 0 6px 0;border-bottom:2px solid var(--line);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em">Holiday</th>
+        </tr>
+      </thead>
+      <tbody id="holidays-tbody"></tbody>
+    </table>
+
+    <script>
+    (function() {
+      // Build schedule table
+      var sbody = document.getElementById('schedule-tbody');
+      if (sbody) {
+        SHIP_SCHEDULE.forEach(function(row) {
+          var tr = document.createElement('tr');
+          tr.innerHTML =
+            '<td style="padding:7px 12px 7px 0;border-bottom:1px solid var(--line);color:var(--text);font-weight:500">' + row.day + '</td>' +
+            '<td style="padding:7px 12px 7px 0;border-bottom:1px solid var(--line)">' +
+              (row.ships
+                ? '<span style="color:var(--pill-on-text);font-weight:600">Yes</span>'
+                : '<span style="color:var(--muted)">Closed</span>') +
+            '</td>' +
+            '<td style="padding:7px 0 7px 0;border-bottom:1px solid var(--line);color:var(--text)">' +
+              (row.cutoff || '<span style="color:var(--muted)">—</span>') +
+            '</td>';
+          sbody.appendChild(tr);
+        });
+      }
+
+      // Build holidays table
+      var hbody = document.getElementById('holidays-tbody');
+      if (hbody) {
+        // Parse dates to get year and formatted date
+        var now = new Date();
+        var currentYear = now.getFullYear();
+        var years = {};
+        BIZ_HOLIDAYS.forEach(function(h) {
+          var parts = h.date.split('/');
+          var month = parseInt(parts[0], 10);
+          var day = parseInt(parts[1], 10);
+          // Determine year: assign sequentially (2026 first 7, 2027 next 7)
+          // We'll track by matching the known holiday sequence
+          // Use a running year-counter approach: reset when month goes backward
+          var key = h.date + '|' + h.label;
+          years[key] = (years[key] || 0); // placeholder
+        });
+
+        // Simpler: we know the structure — 7 holidays for 2026, 7 for 2027
+        var yearLabels = [2026,2026,2026,2026,2026,2026,2026, 2027,2027,2027,2027,2027,2027,2027];
+        BIZ_HOLIDAYS.forEach(function(h, i) {
+          var year = yearLabels[i] || '';
+          var parts = h.date.split('/');
+          var month = parseInt(parts[0], 10);
+          var day = parseInt(parts[1], 10);
+          var dateObj = new Date(year, month - 1, day);
+          var formatted = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+          var tr = document.createElement('tr');
+          var isThisYear = (year === currentYear);
+          tr.innerHTML =
+            '<td style="padding:7px 12px 7px 0;border-bottom:1px solid var(--line);color:var(--muted)">' + year + '</td>' +
+            '<td style="padding:7px 12px 7px 0;border-bottom:1px solid var(--line);color:var(--text)">' + formatted + '</td>' +
+            '<td style="padding:7px 0 7px 0;border-bottom:1px solid var(--line);color:var(--text)">' + h.label + '</td>';
+          hbody.appendChild(tr);
+        });
+      }
+    })();
+    </script>
+  </section>
   </section>
 </div>
 <div class="page" id="page-preview">
@@ -970,10 +1091,7 @@ loadSkuBoxOverrides().then(function() {
           
             (function() {
               // FedEx/UPS observed holidays (M/D) — weekends auto-skipped
-              const bizHolidays = [
-                '1/1','1/19','5/25','7/4','8/31','11/26','12/25', // 2026
-                '1/1','1/18','5/31','7/5','9/6','11/25','12/24', // 2027
-              ];
+              const bizHolidays = BIZ_HOLIDAYS.map(function(h){return h.date;});
               function nextBizDay(d) {
                 const nd = new Date(d);
                 while (true) {
@@ -1087,77 +1205,6 @@ function savePackagingFactor() {
   // Hash changes (nav clicks)
   window.addEventListener('hashchange', () => showPage(getPage()));
 })();
-</script>
-<script>
-// ── Carrier & Service Toggles ────────────────────────────────────────────────
-async function toggleCarrier(carrierKey, btnEl) {
-  // Legacy pill toggle — find sibling switch and delegate
-  const box = btnEl.closest('.carrier-box');
-  const chk = box ? box.querySelector('.carrier-toggle input') : null;
-  if (chk) { chk.checked = !chk.checked; await toggleCarrierSwitch(carrierKey, chk); } 
-}
-async function toggleCarrierSwitch(carrierKey, chkEl) {
-  chkEl.disabled = true;
-  chkEl.disabled = true;
-  try {
-    const s = await fetch('/api/settings').then(function(r){ return r.json(); });
-    if (!s.carriers[carrierKey]) { alert('Carrier not found: ' + carrierKey); return; }
-    s.carriers[carrierKey].enabled = chkEl.checked;
-    const res = await fetch('/api/settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(s)
-    });
-    if (!res.ok) { alert('Save failed. Please try again.'); chkEl.checked = !chkEl.checked; return; }
-    const isEnabled = s.carriers[carrierKey].enabled;
-    const box = chkEl.closest('.carrier-box');
-    const lbl = box ? box.querySelector('.carrier-status-label') : null;
-    if (lbl) { lbl.textContent = isEnabled ? 'Enabled' : 'Disabled'; }
-    // When carrier is toggled off, also turn off all its service toggles
-    if (!isEnabled && box) {
-      box.querySelectorAll('input[type="checkbox"][data-carrier]').forEach(cb => {
-        if (cb.checked) {
-          cb.checked = false;
-          cb.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      });
-    }
-  } catch(e) {
-    alert('Network error: ' + e.message);
-    chkEl.checked = !chkEl.checked;
-  } finally {
-    chkEl.disabled = false;
-  }
-}
-
-async function toggleService(chkEl) {
-  const carrierKey = chkEl.getAttribute('data-carrier');
-  const svcIdx = parseInt(chkEl.getAttribute('data-svc-idx'), 10);
-  chkEl.disabled = true;
-  try {
-    const s = await fetch('/api/settings').then(function(r){ return r.json(); });
-    if (!s.carriers[carrierKey] || !s.carriers[carrierKey].services[svcIdx]) {
-      alert('Service not found.');
-      chkEl.checked = !chkEl.checked;
-      return;
-    }
-    s.carriers[carrierKey].services[svcIdx].enabled = chkEl.checked;
-    const res = await fetch('/api/settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(s)
-    });
-    if (!res.ok) {
-      alert('Save failed. Please try again.');
-      chkEl.checked = !chkEl.checked;
-    }
-  } catch(e) {
-    alert('Network error: ' + e.message);
-    chkEl.checked = !chkEl.checked;
-  } finally {
-    chkEl.disabled = false;
-  }
-}
 </script>
 </body>
 </html>
