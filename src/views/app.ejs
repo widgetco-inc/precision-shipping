@@ -596,6 +596,10 @@ const SHIP_SCHEDULE = [
         <p class="muted" style="margin-bottom:20px">Live from Shopify — open, unfulfilled orders only. Cancelled and already-fulfilled orders are excluded.</p>
 
         <div id="orders-toolbar" style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;">
+            <span style="font-size:13px;color:var(--muted);">Unfulfilled Orders:</span>
+            <span id="orders-count-badge" style="background:var(--accent);color:#fff;font-size:12px;font-weight:700;padding:2px 10px;border-radius:20px;min-width:28px;text-align:center;">—</span>
+          </div>
           <button class="btn-primary" id="orders-refresh-btn" onclick="loadOrders()" style="padding:8px 16px;font-size:13px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-weight:600">
             ↻ Refresh
           </button>
@@ -1268,7 +1272,8 @@ function savePackagingFactor() {
 async function loadOrders() {
   const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const list    = document.getElementById('orders-list');
-  const loading = document.getElementById('orders-state-loading');
+  const loading = document.getElementById('orders-state-loading');    if (document.getElementById('orders-count-badge')) document.getElementById('orders-count-badge').textContent = '…';
+
   const empty   = document.getElementById('orders-state-empty');
   const errBox  = document.getElementById('orders-state-error');
   const updated = document.getElementById('orders-last-updated');
@@ -1290,7 +1295,9 @@ async function loadOrders() {
       return;
     }
 
-    const orders = data.orders || [];
+    const orders = data.orders || [];    const badge = document.getElementById('orders-count-badge');
+    if (badge) badge.textContent = String(orders.length);
+
     if (updated) updated.textContent = 'Last updated: ' + new Date().toLocaleTimeString();
 
     if (orders.length === 0) {
