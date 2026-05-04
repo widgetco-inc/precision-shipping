@@ -142,8 +142,7 @@ app.use(adminRoutes);
 app.use(weightsRoutes);
 app.use(ordersRoutes);
 
-app.get('/', (_req, res) => res.redirect('
-app.use(ordersRoutes);nhandledRejection', (reason) => {
+app.get('/', (_req, res) => res.redirect('nhandledRejection', (reason) => {
   console.error('[shipping-app] Unhandled rejection:', reason);
 });
 
