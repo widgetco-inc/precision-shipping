@@ -19,26 +19,32 @@ function getPool(): Pool {
 }
 
 async function ensurePackagesTable(): Promise<void> {
-  await getPool().query(`
+  const pool = getPool();
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS packages (
-      id SERIAL PRIMARY KEY,
-      name TEXT NOT NULL UNIQUE,
-      length_in DOUBLE PRECISION NOT NULL,
-      width_in  DOUBLE PRECISION NOT NULL,
-      height_in DOUBLE PRECISION NOT NULL,
+      id         SERIAL PRIMARY KEY,
+      name       TEXT NOT NULL UNIQUE,
+      length_in  DOUBLE PRECISION NOT NULL,
+      width_in   DOUBLE PRECISION NOT NULL,
+      height_in  DOUBLE PRECISION NOT NULL,
+      active     BOOLEAN NOT NULL DEFAULT TRUE,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
+  `);
+  // Migration: add active column if it doesn't exist yet
+  await pool.query(`
+    ALTER TABLE packages ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT TRUE
   `);
 }
 
 // ---------------------------------------------------------------------------
-// GET /api/packages  — list all packages
+// GET /api/packages — list all packages
 // ---------------------------------------------------------------------------
 router.get('/api/packages', requireApprovedAdmin, async (_req, res) => {
   try {
     await ensurePackagesTable();
     const result = await getPool().query(
-      'SELECT id, name, length_in, width_in, height_in FROM packages ORDER BY name ASC'
+      'SELECT id, name, length_in, width_in, height_in, active FROM packages ORDER BY name ASC'
     );
     res.json(result.rows);
   } catch (err: any) {
@@ -48,7 +54,7 @@ router.get('/api/packages', requireApprovedAdmin, async (_req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// POST /api/packages  — create a new package
+// POST /api/packages — create a new package
 // ---------------------------------------------------------------------------
 router.post('/api/packages', requireApprovedAdmin, async (req, res) => {
   const { name, length_in, width_in, height_in } = req.body ?? {};
@@ -62,7 +68,7 @@ router.post('/api/packages', requireApprovedAdmin, async (req, res) => {
   try {
     await ensurePackagesTable();
     const result = await getPool().query(
-      'INSERT INTO packages (name, length_in, width_in, height_in) VALUES ($1, $2, $3, $4) RETURNING id, name, length_in, width_in, height_in',
+      'INSERT INTO packages (name, length_in, width_in, height_in, active) VALUES ($1, $2, $3, $4, TRUE) RETURNING id, name, length_in, width_in, height_in, active',
       [String(name).trim(), l, w, h]
     );
     res.json(result.rows[0]);
@@ -76,7 +82,7 @@ router.post('/api/packages', requireApprovedAdmin, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// PUT /api/packages/:id  — update a package
+// PUT /api/packages/:id — update a package
 // ---------------------------------------------------------------------------
 router.put('/api/packages/:id', requireApprovedAdmin, async (req, res) => {
   const id = parseInt(req.params.id, 10);
@@ -91,7 +97,7 @@ router.put('/api/packages/:id', requireApprovedAdmin, async (req, res) => {
   try {
     await ensurePackagesTable();
     const result = await getPool().query(
-      'UPDATE packages SET name=$1, length_in=$2, width_in=$3, height_in=$4 WHERE id=$5 RETURNING id, name, length_in, width_in, height_in',
+      'UPDATE packages SET name=$1, length_in=$2, width_in=$3, height_in=$4 WHERE id=$5 RETURNING id, name, length_in, width_in, height_in, active',
       [String(name).trim(), l, w, h, id]
     );
     if (result.rowCount === 0) return res.status(404).json({ error: 'Package not found' });
@@ -102,6 +108,26 @@ router.put('/api/packages/:id', requireApprovedAdmin, async (req, res) => {
       return res.status(409).json({ error: `A package named "${name}" already exists` });
     }
     res.status(500).json({ error: err?.message ?? 'Failed to update package' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// PATCH /api/packages/:id/toggle — toggle active on/off
+// ---------------------------------------------------------------------------
+router.patch('/api/packages/:id/toggle', requireApprovedAdmin, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (!id) return res.status(400).json({ error: 'id param required' });
+  try {
+    await ensurePackagesTable();
+    const result = await getPool().query(
+      'UPDATE packages SET active = NOT active WHERE id=$1 RETURNING id, name, length_in, width_in, height_in, active',
+      [id]
+    );
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Package not found' });
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    console.error('[packages] PATCH toggle error:', err);
+    res.status(500).json({ error: err?.message ?? 'Failed to toggle package' });
   }
 });
 
