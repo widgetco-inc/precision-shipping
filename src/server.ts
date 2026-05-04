@@ -11,6 +11,7 @@ import carrierRoutes from './routes/carrier';
 import adminRoutes from './routes/admin';
 import { loadSettingsFromDb } from './services/settingsStore';
 import weightsRoutes from './routes/weights';
+import ordersRoutes from './routes/orders';
 
 const app = express();
 
@@ -140,7 +141,8 @@ app.use(carrierRoutes);
 app.use(adminRoutes);
 app.use(weightsRoutes);
 
-app.get('/', (_req, res) => res.redirect('/app'));
+app.get('/', (_req, res) => res.redirect('
+app.use(ordersRoutes);/app'));
 
 process.on('unhandledRejection', (reason) => {
   console.error('[shipping-app] Unhandled rejection:', reason);
