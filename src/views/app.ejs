@@ -1465,7 +1465,7 @@ async function loadOrders() {
       }
       tbody.innerHTML = _packages.map(p =>
         '<tr>' +
-        '<td>' + esc(p.name) + '</td>' +
+        '<td>' + escHtml(p.name) + '</td>' +
         '<td>' + (p.length_in != null ? p.length_in + '"' : '—') + '</td>' +
         '<td>' + (p.width_in != null ? p.width_in + '"' : '—') + '</td>' +
         '<td>' + (p.height_in != null ? p.height_in + '"' : '—') + '</td>' +
