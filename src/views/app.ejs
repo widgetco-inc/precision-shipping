@@ -499,7 +499,7 @@ const SHIP_SCHEDULE = [
 
         <div class="est-totals">
           <div class="est-total-item">Total items: <strong id="estTotalQty">0</strong></div>
-          <div class="est-total-item">Total weight: <strong id="estTotalG">0 g</strong></div>
+          <div class="est-total-item">Total weight: <strong id="estTotalLb">0 lb</strong></div>
           
           <div class="est-total-item" id="estBoxDimDisplay" style="display:none">Box: <strong id="estBoxDimText"></strong></div>
         </div>
@@ -1057,8 +1057,7 @@ loadSkuBoxOverrides().then(function() {
       if (qty > 0 && unitG > 0) { totalQty += qty; totalG += rowG; }
     });
     document.getElementById('estTotalQty').textContent = totalQty.toLocaleString();
-    document.getElementById('estTotalG').textContent   = totalG.toFixed(2) + ' g';
-    document.getElementById('estTotalLb').textContent  = (totalG / 453.59237).toFixed(4) + ' lb';
+    document.getElementById('estTotalLb').textContent  = totalG.toFixed(2) + ' lb';
     const L = parseFloat(document.getElementById('estBoxL').value) || 0;
     const W = parseFloat(document.getElementById('estBoxW').value) || 0;
     const H = parseFloat(document.getElementById('estBoxH').value) || 0;
