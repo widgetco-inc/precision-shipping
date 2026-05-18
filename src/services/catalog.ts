@@ -1,4 +1,4 @@
-mport { shopifyGraphql } from '../shopify';
+import { shopifyGraphql } from '../shopify';
 import { Pool } from 'pg';
 
 interface MetafieldNode { value: string; }
