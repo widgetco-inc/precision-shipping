@@ -189,7 +189,7 @@ async function fetchAllRatesForAccount(
         ...(isResidential ? { residential: true } : {}),
       },
       parcel: {
-                  weight: shipment.totalShipmentWeightLbs * 16, // oz — total shipment weight across all boxes
+                  weight: shipment.heaviestBoxWeightLb * 16, // oz — heaviest single box weight (parcel_count handles multi-box)
         length: 12,
         width: 9,
         height: 4,
@@ -203,7 +203,7 @@ async function fetchAllRatesForAccount(
             description: 'Merchandise',
             quantity: 1,
             value: 1,
-            weight: shipment.totalShipmentWeightLbs * 16,
+            weight: shipment.heaviestBoxWeightLb * 16,
             origin_country: 'US',
           }],
         },
