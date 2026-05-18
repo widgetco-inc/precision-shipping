@@ -29,7 +29,7 @@ async function fetchUSPSDomesticRate(
   shipment: Shipment,
   token: string
 ): Promise<number | null> {
-  const weightLb = Math.max(shipment.totalShipmentWeightLb, 0.01);
+  const weightLb = Math.max(shipment.totalShipmentWeightLbs, 0.01);
   const params = new URLSearchParams({
     originZIPCode: env.originZip,
     destinationZIPCode: shipment.destination.postalCode ?? '10001',
@@ -61,7 +61,7 @@ async function fetchUSPSInternationalRate(
   shipment: Shipment,
   token: string
 ): Promise<number | null> {
-  const weightLb = Math.max(shipment.totalShipmentWeightLb, 0.01);
+  const weightLb = Math.max(shipment.totalShipmentWeightLbs, 0.01);
   const params = new URLSearchParams({
     originZIPCode: env.originZip,
     destinationCountryCode: shipment.destination.countryCode,
@@ -116,7 +116,7 @@ export class UspsAdapter implements CarrierAdapter {
       if (!svc.enabled) return false;
       if (svc.domesticOnly && !shipment.isDomestic) return false;
       if (svc.internationalOnly && shipment.isDomestic) return false;
-      if (svc.maxWeightLb != null && shipment.totalShipmentWeightLb > svc.maxWeightLb) return false;
+      if (svc.maxWeightLb != null && shipment.totalShipmentWeightLbs > svc.maxWeightLb) return false;
       return true;
     });
 
@@ -140,7 +140,7 @@ export class UspsAdapter implements CarrierAdapter {
           amountUsd: Number(total.toFixed(2)),
           currency: 'USD',
           debug: [
-            `weightLb=${shipment.totalShipmentWeightLb.toFixed(3)}`,
+            `weightLb=${shipment.totalShipmentWeightLbs.toFixed(3)}`,
             `service=${svc.code}`,
             'rateSource=usps-live',
           ],
