@@ -189,7 +189,7 @@ async function fetchAllRatesForAccount(
         ...(isResidential ? { residential: true } : {}),
       },
       parcel: {
-                  weight: shipment.totalShipmentWeightLb * 16, // oz — total shipment weight across all boxes
+                  weight: shipment.totalShipmentWeightLbs * 16, // oz — total shipment weight across all boxes
         length: 12,
         width: 9,
         height: 4,
@@ -203,7 +203,7 @@ async function fetchAllRatesForAccount(
             description: 'Merchandise',
             quantity: 1,
             value: 1,
-            weight: shipment.totalShipmentWeightLb * 16,
+            weight: shipment.totalShipmentWeightLbs * 16,
             origin_country: 'US',
           }],
         },
@@ -292,8 +292,8 @@ export class EasyPostAdapter implements CarrierAdapter {
         if (svc.canadaOnly && !shipment.isCanada) continue;
         if (svc.hiAkOnly && !shipment.isHiAkTerritory) continue;
         if (svc.excludeHiAk && shipment.isHiAkTerritory) continue;
-        if (svc.maxWeightLb != null && shipment.totalShipmentWeightLb > svc.maxWeightLb) continue;
-        if (svc.minWeightLb != null && shipment.totalShipmentWeightLb < svc.minWeightLb) continue;
+        if (svc.maxWeightLb != null && shipment.totalShipmentWeightLbs > svc.maxWeightLb) continue;
+        if (svc.minWeightLb != null && shipment.totalShipmentWeightLbs < svc.minWeightLb) continue;
 
         // Translate our service code to EasyPost's service code and look up the rate
         const epServiceCode = svcCodeMap[svc.code];
@@ -307,7 +307,7 @@ export class EasyPostAdapter implements CarrierAdapter {
                 let finalAmount = rawRate; // EasyPost rates the full multi-piece shipment via parcel_count
         if (svc.handlingFeeUsd) finalAmount += svc.handlingFeeUsd;
         if (svc.flatRateUsd != null) finalAmount = svc.flatRateUsd;
-        if (svc.freeThresholdUsd != null && shipment.totalShipmentWeightLb === 0) finalAmount = 0;
+        if (svc.freeThresholdUsd != null && shipment.totalShipmentWeightLbs === 0) finalAmount = 0;
 
         quotes.push({
           carrier: internalCarrierKey(carrierKey),
