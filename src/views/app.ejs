@@ -491,7 +491,7 @@ const SHIP_SCHEDULE = [
         <div class="est-section">
           <p class="est-section-label">Items</p>
           <div class="est-sku-header">
-            <span>SKU</span><span>Qty</span><span>g / unit</span><span>Total g</span><span></span>
+            <span>SKU</span><span>Qty</span><span>lb / unit</span><span>Total lb</span><span></span>
           </div>
           <div id="estSkuRows"></div>
           <button class="est-add-btn" id="estAddRow" type="button">+ Add SKU</button>
@@ -500,7 +500,7 @@ const SHIP_SCHEDULE = [
         <div class="est-totals">
           <div class="est-total-item">Total items: <strong id="estTotalQty">0</strong></div>
           <div class="est-total-item">Total weight: <strong id="estTotalG">0 g</strong></div>
-          <div class="est-total-item">= <strong id="estTotalLb">0 lb</strong></div>
+          
           <div class="est-total-item" id="estBoxDimDisplay" style="display:none">Box: <strong id="estBoxDimText"></strong></div>
         </div>
 
@@ -554,8 +554,8 @@ const SHIP_SCHEDULE = [
               <th>Product</th>
               <th>Variant</th>
               <th>SKU</th>
-              <th>Shopify (g)</th>
-              <th>True weight (g)</th>
+              <th>Shopify (lb)</th>
+              <th>True weight (lb)</th>
               <th>Status</th>
               <th>Edit</th>
             </tr>
@@ -577,8 +577,8 @@ const SHIP_SCHEDULE = [
           <thead>
             <tr>
               <th>SKU</th>
-              <th>Uploaded Weight (g)</th>
-              <th>Shopify Weight (g)</th>
+              <th>Uploaded Weight (lb)</th>
+              <th>Shopify Weight (lb)</th>
               <th>Status</th>
               <th>Individual Box</th>
               <th>Remove</th>
@@ -927,8 +927,8 @@ async function loadUploadedWeightsTable() {
         : '<span title="Mismatch" style="color:#dc2626;font-size:16px">&#10007;</span>';
     return '<tr data-sku="' + escHtml(sku) + '">' +
       '<td><code>' + escHtml(sku) + '</code></td>' +
-      '<td>' + uploaded + ' g</td>' +
-      '<td>' + (shopify !== null ? shopify + ' g' : '<span class=\"muted\">\u2014</span>') + '</td>' +
+      '<td>' + (uploaded/453.59237).toFixed(4) + ' lb</td>' +
+      '<td>' + (shopify !== null ? (shopify/453.59237).toFixed(4) + ' lb' : '<span class=\"muted\">\u2014</span>') + '</td>' +
       '<td style="font-size:18px;text-align:center">' + statusHtml + '</td>' +
       '<td style="text-align:center">' +
         '<label class="toggle-switch" title="Each unit ships in its own individual box">' +
@@ -1053,7 +1053,7 @@ loadSkuBoxOverrides().then(function() {
   try {
     const data = await fetch('/api/weights/uploaded').then(r => r.json());
     Object.entries(data).forEach(([sku, wg]) => {
-      if (sku && typeof wg === 'number') { skuWeights[sku.toUpperCase()] = wg; skuList.push(sku); }
+      if (sku && typeof wg === 'number') { skuWeights[sku.toUpperCase()] = wg / 453.59237; skuList.push(sku); }
     });
   } catch (_) {}
 
@@ -1069,7 +1069,7 @@ loadSkuBoxOverrides().then(function() {
       let unitG    = skuWeights[skuVal];
       if (unitG === undefined) unitG = parseFloat(row.querySelector('.est-manual-weight').value) || 0;
       const rowG   = unitG * qty;
-      row.querySelector('.est-row-total').textContent = (qty > 0 && unitG > 0) ? rowG.toFixed(2) + ' g' : '—';
+      row.querySelector('.est-row-total').textContent = (qty > 0 && unitG > 0) ? rowG.toFixed(4) + ' lb' : '—';
       if (qty > 0 && unitG > 0) { totalQty += qty; totalG += rowG; }
     });
     document.getElementById('estTotalQty').textContent = totalQty.toLocaleString();
@@ -1095,15 +1095,15 @@ loadSkuBoxOverrides().then(function() {
       const item = document.createElement('div');
       item.className = 'est-ac-item';
       const w = skuWeights[sku.toUpperCase()];
-      item.innerHTML = '<span>' + esc(sku) + '</span><span class="est-ac-wt">' + (w !== undefined ? w + ' g' : '') + '</span>';
+      item.innerHTML = '<span>' + esc(sku) + '</span><span class="est-ac-wt">' + (w !== undefined ? w.toFixed(4) + ' lb' : '') + '</span>';
       item.addEventListener('mousedown', e => {
         e.preventDefault();
         inp.value = sku; dd.style.display = 'none';
         const row = inp.closest('.est-row');
         const unit = row.querySelector('.est-unit-g');
         const manual = row.querySelector('.est-manual-weight');
-        if (w !== undefined) { unit.textContent = w + ' g'; unit.className = 'est-unit-g found'; manual.style.display = 'none'; }
-        else { unit.textContent = 'Not found — enter g:'; unit.className = 'est-unit-g'; manual.style.display = ''; }
+        if (w !== undefined) { unit.textContent = w.toFixed(4) + ' lb'; unit.className = 'est-unit-g found'; manual.style.display = 'none'; }
+        else { unit.textContent = 'Not found — enter lb:'; unit.className = 'est-unit-g'; manual.style.display = ''; }
         updateTotals();
         row.querySelector('.est-qty-input').focus();
       });
@@ -1127,7 +1127,7 @@ loadSkuBoxOverrides().then(function() {
         '<div class="est-ac"></div>' +
       '</div>' +
       '<input type="number" class="est-qty-input" value="' + qtyVal + '" min="0" step="1" />' +
-      '<span class="est-unit-g' + (found ? ' found' : '') + '">' + (found ? w + ' g' : (skuVal ? 'Not found — enter g:' : '—')) + '</span>' +
+      '<span class="est-unit-g' + (found ? ' found' : '') + '">' + (found ? w.toFixed(4) + ' lb' : (skuVal ? 'Not found — enter lb:' : '—')) + '</span>' +
       '<input type="number" class="est-manual-weight" step="0.0001" min="0.0001" placeholder="g" style="display:' + (!found && skuVal ? '' : 'none') + '" />' +
       '<span class="est-row-total">—</span>' +
       '<button class="est-remove-btn" type="button">✕</button>';
@@ -1140,7 +1140,7 @@ loadSkuBoxOverrides().then(function() {
       showAC(inp, dd);
       const s = inp.value.toUpperCase().trim(), wt = skuWeights[s];
       if (!s)      { unit.textContent = '—'; unit.className = 'est-unit-g'; manual.style.display = 'none'; }
-      else if (wt !== undefined) { unit.textContent = wt + ' g'; unit.className = 'est-unit-g found'; manual.style.display = 'none'; }
+      else if (wt !== undefined) { unit.textContent = wt.toFixed(4) + ' lb'; unit.className = 'est-unit-g found'; manual.style.display = 'none'; }
       else         { unit.textContent = 'Not found — enter g:'; unit.className = 'est-unit-g'; manual.style.display = ''; }
       updateTotals();
     });
@@ -1171,7 +1171,7 @@ loadSkuBoxOverrides().then(function() {
       const qty = parseInt(row.querySelector('.est-qty-input').value) || 0;
       let wg    = skuWeights[s];
       if (wg === undefined) wg = parseFloat(row.querySelector('.est-manual-weight').value) || 0;
-      if (qty > 0 && wg > 0) lines.push({ sku: s || undefined, quantity: qty, trueWeightGrams: wg });
+      if (qty > 0 && wg > 0) lines.push({ sku: s || undefined, quantity: qty, trueWeightLbs: wg });
     });
     if (!lines.length) { reEl.style.display = ''; out.textContent = 'Add at least one SKU with a valid weight.'; return; }
     btn.disabled = true; btn.textContent = 'Getting rates…';
@@ -1195,9 +1195,9 @@ loadSkuBoxOverrides().then(function() {
         html += '<tr><td>To</td><td>' + esc((zip || '—') + ', ' + cc) + '</td></tr>';
         if (L > 0 && W > 0 && H > 0) html += '<tr><td>Box</td><td>' + L + ' × ' + W + ' × ' + H + '</td></tr>';
         html += '<tr><td>Items</td><td>' + lines.reduce((a, l) => a + l.quantity, 0).toLocaleString() + '</td></tr>';
-        html += '<tr><td>Item weight</td><td>' + (s.totalItemWeightGrams?.toFixed(2) ?? '—') + ' g (' + ((s.totalItemWeightGrams ?? 0) / 453.592).toFixed(4) + ' lb)</td></tr>';
-        html += '<tr><td>Package weight (5%)</td><td>' + (s.packageWeightGrams?.toFixed(2) ?? '—') + ' g (' + ((s.packageWeightGrams ?? 0) / 453.592).toFixed(4) + ' lb)</td></tr>';
-        html += '<tr><td><strong>Shipment weight</strong></td><td><strong>' + (s.totalShipmentWeightGrams?.toFixed(2) ?? '—') + ' g (' + (s.totalShipmentWeightLb?.toFixed(4) ?? '—') + ' lb)</strong></td></tr>';
+        html += '<tr><td>Item weight</td><td>' + (s.totalItemWeightLbs?.toFixed(4) ?? '—') + ' lb</td></tr>';
+        html += '<tr><td>Package weight</td><td>' + (s.packageWeightLbs?.toFixed(4) ?? '—') + ' lb</td></tr>';
+        html += '<tr><td><strong>Shipment weight</strong></td><td><strong>' + (s.totalShipmentWeightLbs?.toFixed(4) ?? '—') + ' lb</strong></td></tr>';
         html += '</table></div>';
       }
 
