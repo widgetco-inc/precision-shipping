@@ -45,7 +45,7 @@ async function fetchFedExRate(
   const serviceType = SERVICE_TYPE_MAP[serviceCode];
   if (!serviceType) return null;
 
-  const weightKg = Math.max(shipment.totalShipmentWeightLb * 0.453592, 0.1);
+  const weightKg = Math.max(shipment.totalShipmentWeightLbs * 0.453592, 0.1);
   const dest = shipment.destination;
 
   const body = {
@@ -127,8 +127,8 @@ export class FedexAdapter implements CarrierAdapter {
       if (svc.domesticOnly && !shipment.isDomestic) return false;
       if (svc.internationalOnly && !shipment.isInternational && !shipment.isCanada) return false;
       if (svc.canadaOnly && !shipment.isCanada) return false;
-      if (svc.maxWeightLb != null && shipment.totalShipmentWeightLb > svc.maxWeightLb) return false;
-      if (svc.minWeightLb != null && shipment.totalShipmentWeightLb < svc.minWeightLb) return false;
+      if (svc.maxWeightLb != null && shipment.totalShipmentWeightLbs > svc.maxWeightLb) return false;
+      if (svc.minWeightLb != null && shipment.totalShipmentWeightLbs < svc.minWeightLb) return false;
       return true;
     });
 
@@ -145,7 +145,7 @@ export class FedexAdapter implements CarrierAdapter {
           amountUsd: Number(total.toFixed(2)),
           currency: 'USD',
           debug: [
-            `weightLb=${shipment.totalShipmentWeightLb.toFixed(3)}`,
+            `weightLb=${shipment.totalShipmentWeightLbs.toFixed(3)}`,
             `service=${svc.code}`,
             'rateSource=fedex-live',
           ],
