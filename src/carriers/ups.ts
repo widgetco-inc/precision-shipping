@@ -51,7 +51,7 @@ async function fetchUPSRate(
   const upsCode = UPS_SERVICE_CODE[serviceCode];
   if (!upsCode) return null;
 
-  const weightLb = Math.max(shipment.totalShipmentWeightLbs, 0.1).toFixed(2);
+  const weightLb = Math.max(shipment.heaviestBoxWeightLb, 0.1).toFixed(2);
   const dest = shipment.destination;
 
   const body = {
@@ -143,8 +143,8 @@ export class UpsAdapter implements CarrierAdapter {
       if (svc.domesticOnly && !shipment.isDomestic) return false;
       // For HI/AK don't show Ground Saver
       if (shipment.isHiAkTerritory && ['GROUND_SAVER', 'GROUND_SAVER_LIGHT', 'GROUND_SAVER_HEAVY'].includes(svc.code)) return false;
-      if (svc.maxWeightLb != null && shipment.totalShipmentWeightLbs > svc.maxWeightLb) return false;
-      if (svc.minWeightLb != null && shipment.totalShipmentWeightLbs < svc.minWeightLb) return false;
+      if (svc.maxWeightLb != null && shipment.heaviestBoxWeightLb > svc.maxWeightLb) return false;
+      if (svc.minWeightLb != null && shipment.heaviestBoxWeightLb < svc.minWeightLb) return false;
       return true;
     });
 
@@ -166,7 +166,7 @@ export class UpsAdapter implements CarrierAdapter {
           amountUsd: Number(total.toFixed(2)),
           currency: 'USD',
           debug: [
-            `weightLb=${shipment.totalShipmentWeightLbs.toFixed(3)}`,
+            `weightLb=${shipment.heaviestBoxWeightLb.toFixed(3)}`,
             `service=${svc.code}`,
             `acct=${shipperNumber.slice(0,2)}**`,
             'rateSource=ups-live',
