@@ -180,9 +180,6 @@
       </div>
 
       <!-- SKU search -->
-      <div class="sku-search-row">
-        <input type="text" id="skuSearch" placeholder="Search SKU or product…" />
-      </div>
 
       <div id="syncWarnings"></div>
 
@@ -296,7 +293,6 @@ function renderWeightsResult(result) {
       '</tr>'
     ).join('');
     document.getElementById('weightsTable').style.display = '';
-    applySkuFilter();
   }
 }
 
@@ -341,17 +337,6 @@ document.getElementById('syncWeightsBtn').addEventListener('click', async () => 
 });
 
 // ── SKU search / filter ───────────────────────────────────────────────────────
-function applySkuFilter() {
-  const q = document.getElementById('skuSearch').value.toLowerCase().trim();
-  const rows = document.querySelectorAll('#weightsTableBody tr');
-  rows.forEach(row => {
-    if (!q) { row.style.display = ''; return; }
-    const text = row.textContent.toLowerCase();
-    row.style.display = text.includes(q) ? '' : 'none';
-  });
-}
-
-document.getElementById('skuSearch').addEventListener('input', applySkuFilter);
 
 // ── CSV import ────────────────────────────────────────────────────────────────
 document.getElementById('csvUploadBtn').addEventListener('click', async () => {
