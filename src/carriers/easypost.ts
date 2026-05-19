@@ -304,7 +304,7 @@ export class EasyPostAdapter implements CarrierAdapter {
               const rawRate = epRate.rate;
               const estDeliveryDays = epRate.estDeliveryDays;
 
-                let finalAmount = rawRate; // EasyPost rates the full multi-piece shipment via parcel_count
+                let finalAmount = rawRate * shipment.numberOfBoxes; // multiply per-parcel rate by number of boxes
         if (svc.handlingFeeUsd) finalAmount += svc.handlingFeeUsd;
         if (svc.flatRateUsd != null) finalAmount = svc.flatRateUsd;
         if (svc.freeThresholdUsd != null && shipment.totalShipmentWeightLbs === 0) finalAmount = 0;
