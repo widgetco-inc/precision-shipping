@@ -158,7 +158,7 @@ export class UpsAdapter implements CarrierAdapter {
       try {
         const rate = await fetchUPSRate(svc.code, shipment, token, shipperNumber);
         if (rate == null) continue;
-        const total = rate + (svc.handlingFeeUsd ?? 0);
+        const total = (rate * shipment.numberOfBoxes) + (svc.handlingFeeUsd ?? 0);
         quotes.push({
           carrier: 'ups',
           serviceCode: svc.code,
