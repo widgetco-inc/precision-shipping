@@ -79,7 +79,7 @@ function applyZoneRules(
                                       });
                           }
                 }
-                return results;
+      // All matching calc tiers are collected — no early return
         }
   }
 
