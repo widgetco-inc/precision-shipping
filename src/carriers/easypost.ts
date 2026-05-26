@@ -254,6 +254,10 @@ async function fetchAllRatesForAccount(
 export class EasyPostAdapter implements CarrierAdapter {
   async getRates(shipment: Shipment, fromZip?: string, isResidential?: boolean): Promise<RateQuote[]> {
     const settings = getSettings();
+    if (!env.easypostApiKey) {
+      console.warn('[easypost] EASYPOST_API_KEY is not set — skipping live rates');
+      return [];
+    }
     const quotes: RateQuote[] = [];
 
     // Determine which carrier keys are enabled
