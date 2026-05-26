@@ -53,7 +53,10 @@ function applyZoneRules(
                                                     q.carrier.toLowerCase().includes(c.toLowerCase())
                                     )
                                                     );
-                if (allowed.length === 0) continue; // no matching quotes — try next tier
+                if (allowed.length === 0) {
+          console.warn(`[carrier] calcTier no matches for carriers=[${tier.carriers.join(',')}] — available serviceNames=[${quotes.map(q=>q.serviceName).join(',')}]`);
+          continue; // no matching quotes — try next tier
+        }
                 if (tier.cheapestOnly) {
                           const cheapest = allowed.reduce((a, b) => (a.amountUsd <= b.amountUsd ? a : b));
                           const price = tier.overridePrice !== undefined ? tier.overridePrice : cheapest.amountUsd;
@@ -168,7 +171,8 @@ router.post('/carrier-service/rates', async (req, res) => {
                   rules = REST_OF_WORLD_RULES;
           }
 
-      const rates = applyZoneRules(quotes, subtotal, rules);
+      console.log(`[carrier] pre-filter: subtotal=$${subtotal.toFixed(2)} quotes=${quotes.length} services=[${quotes.map(q=>q.serviceName).join(',')}]`);
+    const rates = applyZoneRules(quotes, subtotal, rules);
 
       const zone =
               shipment.isDomestic && !shipment.isHiAkTerritory
