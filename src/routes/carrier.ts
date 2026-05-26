@@ -244,8 +244,14 @@ router.post('/api/carrier-service/register', requireApprovedAdmin, async (req, r
       const existing = (listData.carrier_services ?? []).find(
               (cs: any) => cs.callback_url?.includes('carrier-service/rates')
             );
-                    if (existing) {
-                            res.json({ ok: true, status: 'already_registered', carrier_service: existing });
+    // Delete existing registration first to force Shopify to re-discover services
+    if (existing) {
+      await fetch(`https://${shop}/admin/api/${apiVersion}/carrier_services/${existing.id}.json`, {
+        method: 'DELETE',
+        headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
+      });
+      console.log('[carrier] Deleted for re-registration:', existing.id);
+    });
                             return;
                     }
 
