@@ -53,7 +53,7 @@ function applyZoneRules(
                                                     q.carrier.toLowerCase().includes(c.toLowerCase())
                                     )
                                                     );
-                if (allowed.length === 0) return results;
+                if (allowed.length === 0) continue; // no matching quotes — try next tier
                 if (tier.cheapestOnly) {
                           const cheapest = allowed.reduce((a, b) => (a.amountUsd <= b.amountUsd ? a : b));
                           const price = tier.overridePrice !== undefined ? tier.overridePrice : cheapest.amountUsd;
