@@ -180,7 +180,7 @@ router.post('/carrier-service/rates', async (req, res) => {
                 : 'INTL';
 
       console.log(
-              `[carrier] zone=${zone} subtotal=$${subtotal.toFixed(2)} easypostQuotes=${quotes.length} returnedRates=${rates.length} weight=${shipment.totalShipmentWeightLb.toFixed(3)}lb`
+              `[carrier] zone=${zone} subtotal=$${subtotal.toFixed(2)} easypostQuotes=${quotes.length} returnedRates=${rates.length} weight=${shipment.totalShipmentWeightLbs.toFixed(3)}lb`
             );
 
       res.json({ rates });
