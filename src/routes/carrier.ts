@@ -251,11 +251,9 @@ router.post('/api/carrier-service/register', requireApprovedAdmin, async (req, r
         headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
       });
       console.log('[carrier] Deleted for re-registration:', existing.id);
-    });
-                            return;
-                    }
+    }
 
-      // service_discovery: false — prevents Shopify from auto-adding to all shipping zones
+      // service_discovery: true — tells Shopify this app supports service discovery
       const createRes = await fetch(url, {
               method: 'POST',
               headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' },
