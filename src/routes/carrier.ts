@@ -118,6 +118,24 @@ function applyZoneRules(
 }
 
 // ---------------------------------------------------------------------------
+// GET /carrier-service/rates (Shopify service discovery)
+// Shopify calls this to learn what services this carrier provides.
+// Returns a static list of all possible service codes and names.
+// ---------------------------------------------------------------------------
+router.get('/carrier-service/rates', (_req, res) => {
+  res.json({
+    services: [
+      { name: 'Standard Delivery', code: 'WIDGETCO:STANDARD' },
+      { name: 'FedEx Ground', code: 'fedex:FEDEX_GROUND' },
+      { name: 'UPS Ground', code: 'ups:UPS_GROUND' },
+      { name: 'FedEx 2Day', code: 'fedex:FEDEX_2_DAY' },
+      { name: 'FedEx Standard Overnight', code: 'fedex:STANDARD_OVERNIGHT' },
+      { name: 'FedEx Priority Overnight', code: 'fedex:PRIORITY_OVERNIGHT' },
+    ],
+  });
+});
+
+// ---------------------------------------------------------------------------
 // POST /carrier-service/rates (Shopify callback)
 // ---------------------------------------------------------------------------
 router.post('/carrier-service/rates', async (req, res) => {
@@ -239,7 +257,7 @@ router.post('/api/carrier-service/register', requireApprovedAdmin, async (req, r
                         carrier_service: {
                                     name: 'Precision Shipping',
                                     callback_url: `${appBaseUrl}/carrier-service/rates`,
-                                    service_discovery: false,
+                                    service_discovery: true,
                                     format: 'json',
                                     active: true,
                         },
