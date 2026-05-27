@@ -14,20 +14,70 @@ import { RateQuote } from '../types';
 const router = Router();
 
 // ---------------------------------------------------------------------------
-// cutoffDescription
-// Returns a same-day cutoff message (4 PM CST M-F) or "ships next business day".
+// addBusinessDays
+// Adds N business days (Mon-Fri) to a given date, skipping weekends.
 // ---------------------------------------------------------------------------
-function cutoffDescription(): string {
+function addBusinessDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  let added = 0;
+  while (added < days) {
+    result.setDate(result.getDate() + 1);
+    const dow = result.getDay();
+    if (dow !== 0 && dow !== 6) added++;
+  }
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// formatDeliveryDate
+// Formats a Date as "Thu, May 29"
+// ---------------------------------------------------------------------------
+function formatDeliveryDate(date: Date): string {
+  return date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'America/Chicago',
+  });
+}
+
+// ---------------------------------------------------------------------------
+// buildDescription
+// Returns a description string with estimated delivery date and cutoff message.
+// transitDays: number of business days in transit.
+//
+// Format examples:
+//   "Thu, May 29 - Order by 4 PM CST to ship today"
+//   "Mon, Jun 2 - Ships next business day"
+// ---------------------------------------------------------------------------
+function buildDescription(transitDays: number): string {
   const now = new Date();
   const chicagoTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Chicago' }));
-  const day = chicagoTime.getDay(); // 0=Sun, 6=Sat
+  const day = chicagoTime.getDay();   // 0=Sun, 6=Sat
   const hour = chicagoTime.getHours();
   const isWeekday = day >= 1 && day <= 5;
   const beforeCutoff = hour < 16; // before 4:00 PM
-  if (isWeekday && beforeCutoff) {
-    return 'Order by 4 PM CST to ship today';
+
+  const shipsToday = isWeekday && beforeCutoff;
+
+  // Ship date: today if before cutoff on a weekday, otherwise next business day
+  let shipDate: Date;
+  if (shipsToday) {
+    shipDate = new Date(chicagoTime);
+  } else {
+    shipDate = new Date(chicagoTime);
+    shipDate.setDate(shipDate.getDate() + 1);
+    while (shipDate.getDay() === 0 || shipDate.getDay() === 6) {
+      shipDate.setDate(shipDate.getDate() + 1);
+    }
   }
-  return 'Ships next business day';
+
+  // Delivery date = ship date + transitDays business days
+  const deliveryDate = addBusinessDays(shipDate, transitDays);
+  const deliveryStr = formatDeliveryDate(deliveryDate);
+
+  const cutoffMsg = shipsToday ? 'Order by 4 PM CST to ship today' : 'Ships next business day';
+  return deliveryStr + ' - ' + cutoffMsg;
 }
 
 // ---------------------------------------------------------------------------
@@ -40,21 +90,22 @@ function applyZoneRules(
   rules: ZoneRules
 ): Array<{ service_name: string; service_code: string; total_price: string; currency: string; description: string }> {
   const results: Array<{ service_name: string; service_code: string; total_price: string; currency: string; description: string }> = [];
-  const cutoff = cutoffDescription();
 
   // --- Flat tiers (checked first, in order) ---
   for (const tier of rules.flatTiers ?? []) {
     const minOk = tier.minSubtotal === undefined || subtotal >= tier.minSubtotal;
     const maxOk = tier.maxSubtotal === undefined || subtotal <= tier.maxSubtotal;
     if (minOk && maxOk) {
+      // Standard Delivery flat tier: default to USPS Ground Advantage = 5 business days
+      const transitDays = 5;
       results.push({
         service_name: tier.label,
         service_code: 'WIDGETCO:STANDARD',
         total_price: Math.round(tier.price * 100).toString(),
         currency: 'USD',
-        description: (tier.price === 0 ? 'Free shipping' : ('Flat rate $' + tier.price.toFixed(2))) + ' — ' + cutoff,
+        description: buildDescription(transitDays),
       });
-      // Flat tier matched — return only this one rate
+      // Flat tier matched - return only this one rate
       return results;
     }
   }
@@ -72,32 +123,39 @@ function applyZoneRules(
         )
       );
       if (allowed.length === 0) {
-        console.warn('[carrier] calcTier no matches for carriers=[' + tier.carriers.join(',') + '] — available serviceNames=[' + quotes.map(q=>q.serviceName).join(',') + ']');
+        console.warn('[carrier] calcTier no matches for carriers=[' + tier.carriers.join(',') + '] - available serviceNames=[' + quotes.map(q => q.serviceName).join(',') + ']');
         continue;
       }
       if (tier.cheapestOnly) {
         const cheapest = allowed.reduce((a, b) => (a.amountUsd <= b.amountUsd ? a : b));
         const price = tier.overridePrice !== undefined ? tier.overridePrice : cheapest.amountUsd;
+        // Use EasyPost estDeliveryDays if available, otherwise fall back to 5
+        const transitDays = (cheapest.estDeliveryDays != null && cheapest.estDeliveryDays > 0)
+          ? cheapest.estDeliveryDays
+          : 5;
         results.push({
           service_name: cheapest.serviceName,
           service_code: cheapest.carrier + ':' + cheapest.serviceCode,
           total_price: Math.round(price * 100).toString(),
           currency: cheapest.currency,
-          description: (price === 0 ? 'Free shipping' : ('$' + price.toFixed(2))) + ' — ' + cutoff,
+          description: buildDescription(transitDays),
         });
       } else {
         for (const q of allowed) {
           const price = tier.overridePrice !== undefined ? tier.overridePrice : q.amountUsd;
+          // Use EasyPost estDeliveryDays if available, otherwise fall back to 3
+          const transitDays = (q.estDeliveryDays != null && q.estDeliveryDays > 0)
+            ? q.estDeliveryDays
+            : 3;
           results.push({
             service_name: q.serviceName,
             service_code: q.carrier + ':' + q.serviceCode,
             total_price: Math.round(price * 100).toString(),
             currency: q.currency,
-            description: (price === 0 ? 'Free shipping' : ('$' + price.toFixed(2))) + ' — ' + cutoff,
+            description: buildDescription(transitDays),
           });
         }
       }
-      // All matching calc tiers collected — no early return
     }
   }
 
@@ -117,12 +175,15 @@ function applyZoneRules(
       if ([...alwaysSuppress].some((s) => nameL.includes(s) || carrierL.includes(s))) continue;
       if (isUsps && suppressUsps) continue;
 
+      const transitDays = (q.estDeliveryDays != null && q.estDeliveryDays > 0)
+        ? q.estDeliveryDays
+        : 5;
       results.push({
         service_name: q.serviceName,
         service_code: q.carrier + ':' + q.serviceCode,
         total_price: Math.round(q.amountUsd * 100).toString(),
         currency: q.currency,
-        description: '$' + q.amountUsd.toFixed(2) + ' — ' + cutoff,
+        description: buildDescription(transitDays),
       });
     }
     return results;
@@ -178,9 +239,13 @@ router.post('/carrier-service/rates', async (req, res) => {
         : undefined,
     };
 
-    // Order subtotal in USD — Shopify sends subtotal_price in cents as a string
-    const subtotalCents = Number(rateReq?.subtotal_price ?? 0);
-    const subtotal = subtotalCents / 100;
+    // Calculate subtotal from line item prices (Shopify sends price in cents as a string).
+    // We do NOT use subtotal_price from the payload — Shopify sends it as 0 and it is unreliable.
+    const subtotal = items.reduce((sum: number, item: any) => {
+      const priceCents = Number(item.price ?? 0);       // cents
+      const qty = Number(item.quantity ?? 1);
+      return sum + (priceCents * qty);
+    }, 0) / 100;
 
     const shipment = await buildShipment(lines, destination);
     const adapters = [new EasyPostAdapter()];
@@ -201,7 +266,7 @@ router.post('/carrier-service/rates', async (req, res) => {
       rules = REST_OF_WORLD_RULES;
     }
 
-    console.log('[carrier] pre-filter: subtotal=$' + subtotal.toFixed(2) + ' quotes=' + quotes.length + ' services=[' + quotes.map(q=>q.serviceName).join(',') + ']');
+    console.log('[carrier] pre-filter: subtotal=$' + subtotal.toFixed(2) + ' quotes=' + quotes.length + ' services=[' + quotes.map(q => q.serviceName).join(',') + ']');
     const rates = applyZoneRules(quotes, subtotal, rules);
 
     const zone =
