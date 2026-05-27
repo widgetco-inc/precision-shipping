@@ -28,12 +28,12 @@ function cutoffDescription(): string {
     return 'Order by 4 PM CST to ship today';
   }
   return 'Ships next business day';
-}
 
 // ---------------------------------------------------------------------------
-// cutoffDescription
-// Returns "Order by 4 PM CST to ship today" on weekdays before 4 PM CST,
-// otherwise "Ships next business day".function applyZoneRules(
+// applyZoneRules
+// Filters and transforms raw EasyPost quotes according to a ZoneRules config.
+// ---------------------------------------------------------------------------
+function applyZoneRules(
   quotes: RateQuote[],
   subtotal: number,
   rules: ZoneRules
