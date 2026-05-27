@@ -225,6 +225,10 @@ async function fetchAllRatesForAccount(
   });
 
   if (!resp.ok) {
+    if (resp.status === 429) {
+      console.warn('[EasyPost] rate-limited (429) for', accountId, '— skipping carrier, flat-tier rules still apply');
+      return new Map();
+    }
     const errText = await resp.text();
     console.error('[EasyPost] non-ok', accountId, resp.status, errText.substring(0, 500));
     throw new Error('[EasyPost] ' + accountId + ' ' + resp.status + ': ' + errText.substring(0, 200));
