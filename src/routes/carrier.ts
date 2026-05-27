@@ -260,13 +260,14 @@ router.post('/carrier-service/rates', async (req, res) => {
         : undefined,
     };
 
-    // Calculate subtotal from line item prices (Shopify sends price in cents as a string).
-    // We do NOT use subtotal_price from the payload - Shopify sends it as 0 and it is unreliable.
-    const subtotal = items.reduce((sum: number, item: any) => {
-      const priceCents = Number(item.price ?? 0);       // cents
-      const qty = Number(item.quantity ?? 1);
-      return sum + (priceCents * qty);
-    }, 0) / 100;
+// Calculate subtotal from line_price (the post-discount line total Shopify sends in cents).
+            // We must NOT use item.price * qty — Shopify sends the undiscounted unit price there,
+            // which overstates the subtotal when volume/promo discounts are active.
+            // item.line_price is the actual charged amount for the line, already discounted, in cents.
+            const subtotal = items.reduce((sum: number, item: any) => {
+                        const linePriceCents = Number(item.line_price ?? (Number(item.price ?? 0) * Number(item.quantity ?? 1)));
+                        return sum + linePriceCents;
+            }, 0) / 100;
 
     const shipment = await buildShipment(lines, destination);
     const adapters = [new EasyPostAdapter()];
