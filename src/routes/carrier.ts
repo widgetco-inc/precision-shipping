@@ -81,11 +81,34 @@ function buildDescription(transitDays: number): string {
 }
 
 // ---------------------------------------------------------------------------
+// uspsGroundTransitDays
+// Extracts USPS Ground Advantage estDeliveryDays from raw EasyPost quotes.
+// Returns the value from EasyPost, or the fallback (5) if not available.
+// ---------------------------------------------------------------------------
+function uspsGroundTransitDays(allQuotes: RateQuote[]): number {
+  const uspsGround = allQuotes.find((q) => {
+    const name = q.serviceName.toLowerCase();
+    const carrier = q.carrier.toLowerCase();
+    return (
+      (name.includes('ground advantage') || name.includes('ground_advantage')) ||
+      (carrier.includes('usps') && name.includes('ground'))
+    );
+  });
+  if (uspsGround && uspsGround.estDeliveryDays != null && uspsGround.estDeliveryDays > 0) {
+    return uspsGround.estDeliveryDays;
+  }
+  return 5; // fallback if USPS not quoted or rate-limited
+}
+
+// ---------------------------------------------------------------------------
 // applyZoneRules
 // Filters and transforms raw EasyPost quotes according to a ZoneRules config.
+// allQuotes: the full unfiltered quote list (used for USPS transit day lookup).
+// filteredQuotes: quotes after carrier suppression (used for calc tiers).
 // ---------------------------------------------------------------------------
 function applyZoneRules(
-  quotes: RateQuote[],
+  allQuotes: RateQuote[],
+  filteredQuotes: RateQuote[],
   subtotal: number,
   rules: ZoneRules
 ): Array<{ service_name: string; service_code: string; total_price: string; currency: string; description: string }> {
@@ -96,8 +119,8 @@ function applyZoneRules(
     const minOk = tier.minSubtotal === undefined || subtotal >= tier.minSubtotal;
     const maxOk = tier.maxSubtotal === undefined || subtotal <= tier.maxSubtotal;
     if (minOk && maxOk) {
-      // Standard Delivery flat tier: default to USPS Ground Advantage = 5 business days
-      const transitDays = 5;
+      // Use USPS Ground Advantage estDeliveryDays from EasyPost for accurate transit time
+      const transitDays = uspsGroundTransitDays(allQuotes);
       results.push({
         service_name: tier.label,
         service_code: 'WIDGETCO:STANDARD',
@@ -115,7 +138,7 @@ function applyZoneRules(
     const minOk = tier.minSubtotal === undefined || subtotal >= tier.minSubtotal;
     const maxOk = tier.maxSubtotal === undefined || subtotal <= tier.maxSubtotal;
     if (minOk && maxOk) {
-      const allowed = quotes.filter((q) =>
+      const allowed = filteredQuotes.filter((q) =>
         tier.carriers.some(
           (c) =>
             q.serviceName.toLowerCase().includes(c.toLowerCase()) ||
@@ -123,13 +146,12 @@ function applyZoneRules(
         )
       );
       if (allowed.length === 0) {
-        console.warn('[carrier] calcTier no matches for carriers=[' + tier.carriers.join(',') + '] - available serviceNames=[' + quotes.map(q => q.serviceName).join(',') + ']');
+        console.warn('[carrier] calcTier no matches for carriers=[' + tier.carriers.join(',') + '] - available serviceNames=[' + filteredQuotes.map(q => q.serviceName).join(',') + ']');
         continue;
       }
       if (tier.cheapestOnly) {
         const cheapest = allowed.reduce((a, b) => (a.amountUsd <= b.amountUsd ? a : b));
         const price = tier.overridePrice !== undefined ? tier.overridePrice : cheapest.amountUsd;
-        // Use EasyPost estDeliveryDays if available, otherwise fall back to 5
         const transitDays = (cheapest.estDeliveryDays != null && cheapest.estDeliveryDays > 0)
           ? cheapest.estDeliveryDays
           : 5;
@@ -143,7 +165,6 @@ function applyZoneRules(
       } else {
         for (const q of allowed) {
           const price = tier.overridePrice !== undefined ? tier.overridePrice : q.amountUsd;
-          // Use EasyPost estDeliveryDays if available, otherwise fall back to 3
           const transitDays = (q.estDeliveryDays != null && q.estDeliveryDays > 0)
             ? q.estDeliveryDays
             : 3;
@@ -165,7 +186,7 @@ function applyZoneRules(
     const suppressUsps =
       rules.suppressUspsOverSubtotal !== undefined && subtotal >= rules.suppressUspsOverSubtotal;
 
-    for (const q of quotes) {
+    for (const q of allQuotes) {
       const nameL = q.serviceName.toLowerCase();
       const carrierL = q.carrier.toLowerCase();
       const isUsps = nameL.includes('usps') || carrierL.includes('usps') ||
@@ -240,7 +261,7 @@ router.post('/carrier-service/rates', async (req, res) => {
     };
 
     // Calculate subtotal from line item prices (Shopify sends price in cents as a string).
-    // We do NOT use subtotal_price from the payload — Shopify sends it as 0 and it is unreliable.
+    // We do NOT use subtotal_price from the payload - Shopify sends it as 0 and it is unreliable.
     const subtotal = items.reduce((sum: number, item: any) => {
       const priceCents = Number(item.price ?? 0);       // cents
       const qty = Number(item.quantity ?? 1);
@@ -250,7 +271,10 @@ router.post('/carrier-service/rates', async (req, res) => {
     const shipment = await buildShipment(lines, destination);
     const adapters = [new EasyPostAdapter()];
     const rawResults = await Promise.all(adapters.map((a) => a.getRates(shipment)));
-    const quotes = rawResults.flat()
+
+    // allQuotes: full unfiltered list - used to extract USPS Ground Advantage transit days
+    // for Standard Delivery flat tier descriptions, even though USPS is suppressed from output.
+    const allQuotes = rawResults.flat()
       .filter(q => q.amountUsd != null && !isNaN(q.amountUsd))
       .sort((a, b) => a.amountUsd - b.amountUsd);
 
@@ -266,8 +290,16 @@ router.post('/carrier-service/rates', async (req, res) => {
       rules = REST_OF_WORLD_RULES;
     }
 
-    console.log('[carrier] pre-filter: subtotal=$' + subtotal.toFixed(2) + ' quotes=' + quotes.length + ' services=[' + quotes.map(q => q.serviceName).join(',') + ']');
-    const rates = applyZoneRules(quotes, subtotal, rules);
+    // filteredQuotes: suppressed carriers removed - used for calc tiers
+    const suppressSet = new Set((rules.suppressCarriers ?? []).map((s: string) => s.toLowerCase()));
+    const filteredQuotes = allQuotes.filter((q) => {
+      const nameL = q.serviceName.toLowerCase();
+      const carrierL = q.carrier.toLowerCase();
+      return ![...suppressSet].some((s) => nameL.includes(s) || carrierL.includes(s));
+    });
+
+    console.log('[carrier] pre-filter: subtotal=$' + subtotal.toFixed(2) + ' quotes=' + allQuotes.length + ' services=[' + allQuotes.map(q => q.serviceName).join(',') + ']');
+    const rates = applyZoneRules(allQuotes, filteredQuotes, subtotal, rules);
 
     const zone =
       shipment.isDomestic && !shipment.isHiAkTerritory
@@ -278,7 +310,7 @@ router.post('/carrier-service/rates', async (req, res) => {
         ? 'AK/HI/TERR'
         : 'INTL';
 
-    console.log('[carrier] zone=' + zone + ' subtotal=$' + subtotal.toFixed(2) + ' easypostQuotes=' + quotes.length + ' returnedRates=' + rates.length + ' weight=' + shipment.totalShipmentWeightLbs.toFixed(3) + 'lb');
+    console.log('[carrier] zone=' + zone + ' subtotal=$' + subtotal.toFixed(2) + ' easypostQuotes=' + allQuotes.length + ' returnedRates=' + rates.length + ' weight=' + shipment.totalShipmentWeightLbs.toFixed(3) + 'lb');
 
     res.json({ rates });
   } catch (err) {
