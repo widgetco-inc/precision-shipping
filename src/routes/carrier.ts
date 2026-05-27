@@ -33,24 +33,7 @@ function cutoffDescription(): string {
 // ---------------------------------------------------------------------------
 // cutoffDescription
 // Returns "Order by 4 PM CST to ship today" on weekdays before 4 PM CST,
-// otherwise "Ships next business day".
-// ---------------------------------------------------------------------------
-function cutoffDescription(): string {
-  const now = new Date();
-  const chicagoTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Chicago' }));
-  const day = chicagoTime.getDay();   // 0=Sun, 6=Sat
-  const hour = chicagoTime.getHours();
-  const isWeekday = day >= 1 && day <= 5;
-  const beforeCutoff = hour < 16;     // strictly before 4:00 PM
-  if (isWeekday && beforeCutoff) return 'Order by 4 PM CST to ship today';
-  return 'Ships next business day';
-}
-
-// ---------------------------------------------------------------------------
-// applyZoneRules
-// Filters and transforms raw EasyPost quotes according to a ZoneRules config.
-// ---------------------------------------------------------------------------
-function applyZoneRules(
+// otherwise "Ships next business day".function applyZoneRules(
   quotes: RateQuote[],
   subtotal: number,
   rules: ZoneRules
