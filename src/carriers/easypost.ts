@@ -264,10 +264,25 @@ export class EasyPostAdapter implements CarrierAdapter {
     }
     const quotes: RateQuote[] = [];
 
-    // Determine which carrier keys are enabled
-    const enabledCarrierKeys = Object.entries(settings.carriers)
-      .filter(([key, cfg]) => cfg.enabled && key in CARRIER_ACCOUNTS)
-      .map(([key]) => key);
+// Determine which carrier keys are enabled
+            // Pre-filter: skip accounts that are disabled OR have no services
+            // eligible for this destination — avoids unnecessary EasyPost API calls.
+            const enabledCarrierKeys = Object.entries(settings.carriers)
+              .filter(([key, cfg]) => {
+                            if (!cfg.enabled || !(key in CARRIER_ACCOUNTS)) return false;
+                            return cfg.services.some((svc) => {
+                                            if (!svc.enabled) return false;
+                                            if (svc.domesticOnly && !shipment.isDomestic) return false;
+                                            if (svc.internationalOnly && !shipment.isInternational) return false;
+                                            if (svc.canadaOnly && !shipment.isCanada) return false;
+                                            if (svc.hiAkOnly && !shipment.isHiAkTerritory) return false;
+                                            if (svc.excludeHiAk && shipment.isHiAkTerritory) return false;
+                                            if (svc.maxWeightLb != null && shipment.totalShipmentWeightLbs > svc.maxWeightLb) return false;
+                                            if (svc.minWeightLb != null && shipment.totalShipmentWeightLbs < svc.minWeightLb) return false;
+                                            return true;
+                            });
+              })
+              .map(([key]) => key);
 
     // Fetch all rates in parallel — ONE API call per carrier account
         const ratesByCarrierKey = new Map<string, Map<string, { rate: number; estDeliveryDays: number | null }>>();
