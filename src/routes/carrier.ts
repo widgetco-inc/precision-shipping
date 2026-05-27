@@ -14,109 +14,138 @@ import { RateQuote } from '../types';
 const router = Router();
 
 // ---------------------------------------------------------------------------
+// cutoffDescription
+// Returns a same-day cutoff message (4 PM CST M-F) or "ships next business day".
+// ---------------------------------------------------------------------------
+function cutoffDescription(): string {
+  const now = new Date();
+  const chicagoTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Chicago' }));
+  const day = chicagoTime.getDay();  // 0=Sun, 6=Sat
+  const hour = chicagoTime.getHours();
+  const isWeekday = day >= 1 && day <= 5;
+  const beforeCutoff = hour < 16;   // before 4:00 PM
+  if (isWeekday && beforeCutoff) {
+    return 'Order by 4 PM CST to ship today';
+  }
+  return 'Ships next business day';
+}
+
+// ---------------------------------------------------------------------------
+// cutoffDescription
+// Returns "Order by 4 PM CST to ship today" on weekdays before 4 PM CST,
+// otherwise "Ships next business day".
+// ---------------------------------------------------------------------------
+function cutoffDescription(): string {
+  const now = new Date();
+  const chicagoTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Chicago' }));
+  const day = chicagoTime.getDay();   // 0=Sun, 6=Sat
+  const hour = chicagoTime.getHours();
+  const isWeekday = day >= 1 && day <= 5;
+  const beforeCutoff = hour < 16;     // strictly before 4:00 PM
+  if (isWeekday && beforeCutoff) return 'Order by 4 PM CST to ship today';
+  return 'Ships next business day';
+}
+
+// ---------------------------------------------------------------------------
 // applyZoneRules
 // Filters and transforms raw EasyPost quotes according to a ZoneRules config.
 // ---------------------------------------------------------------------------
 function applyZoneRules(
-    quotes: RateQuote[],
-    subtotal: number,
-    rules: ZoneRules
-  ): Array<{ service_name: string; service_code: string; total_price: string; currency: string; description: string }> {
-    const results: Array<{ service_name: string; service_code: string; total_price: string; currency: string; description: string }> = [];
+  quotes: RateQuote[],
+  subtotal: number,
+  rules: ZoneRules
+): Array<{ service_name: string; service_code: string; total_price: string; currency: string; description: string }> {
+  const results: Array<{ service_name: string; service_code: string; total_price: string; currency: string; description: string }> = [];
+  const cutoff = cutoffDescription();
 
   // --- Flat tiers (checked first, in order) ---
   for (const tier of rules.flatTiers ?? []) {
-        const minOk = tier.minSubtotal === undefined || subtotal >= tier.minSubtotal;
-        const maxOk = tier.maxSubtotal === undefined || subtotal <= tier.maxSubtotal;
-        if (minOk && maxOk) {
-                results.push({
-                          service_name: tier.label,
-                          service_code: 'WIDGETCO:STANDARD',
-                          total_price: Math.round(tier.price * 100).toString(),
-                          currency: 'USD',
-                          description: tier.price === 0 ? 'Free shipping' : `Flat rate $${tier.price.toFixed(2)}`,
-                });
-                // Flat tier matched — return only this one rate
-          return results;
-        }
+    const minOk = tier.minSubtotal === undefined || subtotal >= tier.minSubtotal;
+    const maxOk = tier.maxSubtotal === undefined || subtotal <= tier.maxSubtotal;
+    if (minOk && maxOk) {
+      results.push({
+        service_name: tier.label,
+        service_code: 'WIDGETCO:STANDARD',
+        total_price: Math.round(tier.price * 100).toString(),
+        currency: 'USD',
+        description: (tier.price === 0 ? 'Free shipping' : ('Flat rate $' + tier.price.toFixed(2))) + ' — ' + cutoff,
+      });
+      // Flat tier matched — return only this one rate
+      return results;
+    }
   }
 
   // --- Calculated tiers ---
   for (const tier of rules.calcTiers ?? []) {
-        const minOk = tier.minSubtotal === undefined || subtotal >= tier.minSubtotal;
-        const maxOk = tier.maxSubtotal === undefined || subtotal <= tier.maxSubtotal;
-        if (minOk && maxOk) {
-                const allowed = quotes.filter((q) =>
-                          tier.carriers.some(
-                                      (c) =>
-                                                    q.serviceName.toLowerCase().includes(c.toLowerCase()) ||
-                                                    q.carrier.toLowerCase().includes(c.toLowerCase())
-                                    )
-                                                    );
-                if (allowed.length === 0) {
-          console.warn(`[carrier] calcTier no matches for carriers=[${tier.carriers.join(',')}] — available serviceNames=[${quotes.map(q=>q.serviceName).join(',')}]`);
-          continue; // no matching quotes — try next tier
+    const minOk = tier.minSubtotal === undefined || subtotal >= tier.minSubtotal;
+    const maxOk = tier.maxSubtotal === undefined || subtotal <= tier.maxSubtotal;
+    if (minOk && maxOk) {
+      const allowed = quotes.filter((q) =>
+        tier.carriers.some(
+          (c) =>
+            q.serviceName.toLowerCase().includes(c.toLowerCase()) ||
+            q.carrier.toLowerCase().includes(c.toLowerCase())
+        )
+      );
+      if (allowed.length === 0) {
+        console.warn(`[carrier] calcTier no matches for carriers=[${tier.carriers.join(',')}] — available serviceNames=[${quotes.map(q=>q.serviceName).join(',')}]`);
+        continue;
+      }
+      if (tier.cheapestOnly) {
+        const cheapest = allowed.reduce((a, b) => (a.amountUsd <= b.amountUsd ? a : b));
+        const price = tier.overridePrice !== undefined ? tier.overridePrice : cheapest.amountUsd;
+        results.push({
+          service_name: cheapest.serviceName,
+          service_code: `${cheapest.carrier}:${cheapest.serviceCode}`,
+          total_price: Math.round(price * 100).toString(),
+          currency: cheapest.currency,
+          description: (price === 0 ? 'Free shipping' : ('$' + price.toFixed(2))) + ' — ' + cutoff,
+        });
+      } else {
+        for (const q of allowed) {
+          const price = tier.overridePrice !== undefined ? tier.overridePrice : q.amountUsd;
+          results.push({
+            service_name: q.serviceName,
+            service_code: `${q.carrier}:${q.serviceCode}`,
+            total_price: Math.round(price * 100).toString(),
+            currency: q.currency,
+            description: (price === 0 ? 'Free shipping' : ('$' + price.toFixed(2))) + ' — ' + cutoff,
+          });
         }
-                if (tier.cheapestOnly) {
-                          const cheapest = allowed.reduce((a, b) => (a.amountUsd <= b.amountUsd ? a : b));
-                          const price = tier.overridePrice !== undefined ? tier.overridePrice : cheapest.amountUsd;
-                          results.push({
-                                      service_name: cheapest.serviceName,
-                                      service_code: `${cheapest.carrier}:${cheapest.serviceCode}`,
-                                      total_price: Math.round(price * 100).toString(),
-                                      currency: cheapest.currency,
-                                      description: price === 0 ? 'Free shipping' : `$${price.toFixed(2)}`,
-                          });
-                } else {
-                          for (const q of allowed) {
-                                      const price = tier.overridePrice !== undefined ? tier.overridePrice : q.amountUsd;
-                                      results.push({
-                                                    service_name: q.serviceName,
-                                                    service_code: `${q.carrier}:${q.serviceCode}`,
-                                                    total_price: Math.round(price * 100).toString(),
-                                                    currency: q.currency,
-                                                    description: price === 0 ? 'Free shipping' : `$${price.toFixed(2)}`,
-                                      });
-                          }
-                }
-      // All matching calc tiers are collected — no early return
-        }
+      }
+      // All matching calc tiers collected — no early return
+    }
   }
 
   // --- Pass-through (Canada, AK/HI, Rest of World) ---
   if (rules.passThrough) {
-        const alwaysSuppress = new Set((rules.suppressCarriers ?? []).map((s) => s.toLowerCase()));
-        const suppressUsps =
-                rules.suppressUspsOverSubtotal !== undefined && subtotal >= rules.suppressUspsOverSubtotal;
+    const alwaysSuppress = new Set((rules.suppressCarriers ?? []).map((s) => s.toLowerCase()));
+    const suppressUsps =
+      rules.suppressUspsOverSubtotal !== undefined && subtotal >= rules.suppressUspsOverSubtotal;
 
-      for (const q of quotes) {
-              const nameL = q.serviceName.toLowerCase();
-              const carrierL = q.carrier.toLowerCase();
-              const isUsps =
-                        nameL.includes('usps') ||
-                        carrierL.includes('usps') ||
-                        nameL.includes('first class') ||
-                        nameL.includes('priority mail') ||
-                        nameL.includes('parcel select') ||
-                        nameL.includes('ground advantage');
+    for (const q of quotes) {
+      const nameL = q.serviceName.toLowerCase();
+      const carrierL = q.carrier.toLowerCase();
+      const isUsps = nameL.includes('usps') || carrierL.includes('usps') ||
+        nameL.includes('first class') || nameL.includes('priority mail') ||
+        nameL.includes('parcel select') || nameL.includes('ground advantage');
 
-          if ([...alwaysSuppress].some((s) => nameL.includes(s) || carrierL.includes(s))) continue;
-              if (isUsps && suppressUsps) continue;
+      if ([...alwaysSuppress].some((s) => nameL.includes(s) || carrierL.includes(s))) continue;
+      if (isUsps && suppressUsps) continue;
 
-          results.push({
-                    service_name: q.serviceName,
-                    service_code: `${q.carrier}:${q.serviceCode}`,
-                    total_price: Math.round(q.amountUsd * 100).toString(),
-                    currency: q.currency,
-                    description: `$${q.amountUsd.toFixed(2)}`,
-          });
-      }
-        return results;
+      results.push({
+        service_name: q.serviceName,
+        service_code: `${q.carrier}:${q.serviceCode}`,
+        total_price: Math.round(q.amountUsd * 100).toString(),
+        currency: q.currency,
+        description: '$' + q.amountUsd.toFixed(2) + ' — ' + cutoff,
+      });
+    }
+    return results;
   }
 
   return results;
 }
-
 // ---------------------------------------------------------------------------
 // GET /carrier-service/rates (Shopify service discovery)
 // Shopify calls this to learn what services this carrier provides.
