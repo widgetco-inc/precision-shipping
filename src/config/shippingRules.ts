@@ -90,10 +90,9 @@ export const AK_HI_TERRITORY_RULES: ZoneRules = {
 
 /**
  * Rest of World (international)
- * All carriers pass through at calculated rates; USPS always hidden.
+ * All carriers pass through at calculated rates; insureUspsUSPS shown (pass-through).: true,
  */
 export const REST_OF_WORLD_RULES: ZoneRules = {
-    suppressCarriers: ['USPS'],
     insureUsps: true,
     passThrough: true,
 };
