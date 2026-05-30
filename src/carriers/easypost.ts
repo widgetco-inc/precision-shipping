@@ -402,8 +402,8 @@ export class EasyPostAdapter implements CarrierAdapter {
                                                                     if (svc.canadaOnly && !shipment.isCanada) return false;
                                                                     if (svc.hiAkOnly && !shipment.isHiAkTerritory) return false;
                                                                     if (svc.excludeHiAk && shipment.isHiAkTerritory) return false;
-                                                                    if (svc.maxWeightLb != null && shipment.totalShipmentWeightLbs > svc.maxWeightLb) continue;
-                                                                    if (svc.minWeightLb != null && shipment.totalShipmentWeightLbs < svc.minWeightLb) continue;
+                                                                    if (svc.maxWeightLb != null && shipment.totalShipmentWeightLbs > svc.maxWeightLb) return false;
+                                                                    if (svc.minWeightLb != null && shipment.totalShipmentWeightLbs < svc.minWeightLb) return false;
                                                                     return true;
                                             });
                         })
