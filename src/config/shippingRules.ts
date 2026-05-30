@@ -7,27 +7,27 @@
  */
 
 export interface ZoneRules {
-  suppressCarriers?: string[];
-  suppressUspsOverSubtotal?: number;
-  passThrough?: boolean;
-  insureUsps?: boolean;
-  flatTiers?: FlatTier[];
-  calcTiers?: CalcTier[];
+    suppressCarriers?: string[];
+    suppressUspsOverSubtotal?: number;
+    passThrough?: boolean;
+    insureUsps?: boolean;
+    flatTiers?: FlatTier[];
+    calcTiers?: CalcTier[];
 }
 
 export interface FlatTier {
-  label: string;
-  price: number;        // USD — 0 = free
-  minSubtotal?: number; // inclusive
-  maxSubtotal?: number; // inclusive
+    label: string;
+    price: number;          // USD — 0 = free
+  minSubtotal?: number;   // inclusive
+  maxSubtotal?: number;   // inclusive
 }
 
 export interface CalcTier {
-  carriers: string[];
-  cheapestOnly: boolean;
-  overridePrice?: number; // USD — 0 = free; undefined = use EasyPost price
+    carriers: string[];
+    cheapestOnly: boolean;
+    overridePrice?: number; // USD — 0 = free; undefined = use EasyPost price
   minSubtotal?: number;
-  maxSubtotal?: number;
+    maxSubtotal?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -38,36 +38,36 @@ export interface CalcTier {
  * US 48 Contiguous States
  *
  * Flat tiers (first match wins, exits immediately):
- *   < $35       → "Standard Delivery"  $4.95
- *   $35–$99.99  → "Standard Delivery"  Free
+ *   < $35        → "Standard Delivery"  $4.95
+ *   $35–$99.99   → "Standard Delivery"  Free
  *
  * Calc tiers (all matching tiers evaluated and returned):
- *   $100+       → FedEx Ground or UPS Ground (cheapest wins) — Free
- *   All orders  → FedEx 2Day               at real EasyPost rate
- *   All orders  → FedEx Standard Overnight  at real EasyPost rate
- *   All orders  → FedEx Priority Overnight  at real EasyPost rate
+ *   $100+        → FedEx Ground® — Free
+ *   All orders   → FedEx 2Day® at real EasyPost rate
+ *   All orders   → FedEx Standard Overnight® at real EasyPost rate
+ *   All orders   → FedEx Priority Overnight® at real EasyPost rate
  *
- * USPS: always suppressed
+ * USPS: always suppressed for US 48
  */
 export const US_48_RULES: ZoneRules = {
-  suppressCarriers: ['USPS'],
-  flatTiers: [
-    { label: 'Standard Delivery', price: 4.95, maxSubtotal: 34.99 },
-    { label: 'Standard Delivery', price: 0,    minSubtotal: 35, maxSubtotal: 99.99 },
-  ],
-  calcTiers: [
-    // $100+ — free ground, cheapest of FedEx Ground or UPS Ground
-    {
-      carriers: ['FedEx Ground', 'UPS Ground'],
-      cheapestOnly: true,
-      overridePrice: 0,
-      minSubtotal: 100,
-    },
-    // Express — always shown at real calculated rate, no cheapest-only filtering
-    { carriers: ['FedEx 2Day'],               cheapestOnly: false },
-    { carriers: ['FedEx Standard Overnight'],  cheapestOnly: false },
-    { carriers: ['FedEx Priority Overnight'],  cheapestOnly: false },
-  ],
+    suppressCarriers: ['USPS'],
+    flatTiers: [
+      { label: 'Standard Delivery', price: 4.95, maxSubtotal: 34.99 },
+      { label: 'Standard Delivery', price: 0,    minSubtotal: 35, maxSubtotal: 99.99 },
+        ],
+    calcTiers: [
+          // $100+ — free FedEx Ground® only
+      {
+              carriers: ['FedEx Ground'],
+              cheapestOnly: false,
+              overridePrice: 0,
+              minSubtotal: 100,
+      },
+          // Express — always shown at real calculated rate
+      { carriers: ['FedEx 2Day'],               cheapestOnly: false },
+      { carriers: ['FedEx Standard Overnight'], cheapestOnly: false },
+      { carriers: ['FedEx Priority Overnight'], cheapestOnly: false },
+        ],
 };
 
 /**
@@ -75,8 +75,8 @@ export const US_48_RULES: ZoneRules = {
  * Pass through all EasyPost rates; suppress USPS on orders >= $100.
  */
 export const CANADA_RULES: ZoneRules = {
-  passThrough: true,
-  suppressUspsOverSubtotal: 100,
+    passThrough: true,
+    suppressUspsOverSubtotal: 100,
 };
 
 /**
@@ -84,8 +84,8 @@ export const CANADA_RULES: ZoneRules = {
  * Pass through all EasyPost rates; suppress USPS on orders >= $100.
  */
 export const AK_HI_TERRITORY_RULES: ZoneRules = {
-  passThrough: true,
-  suppressUspsOverSubtotal: 100,
+    passThrough: true,
+    suppressUspsOverSubtotal: 100,
 };
 
 /**
@@ -93,7 +93,7 @@ export const AK_HI_TERRITORY_RULES: ZoneRules = {
  * All carriers pass through at calculated rates; USPS always hidden.
  */
 export const REST_OF_WORLD_RULES: ZoneRules = {
-  suppressCarriers: ['USPS'],
-  insureUsps: true,
-  passThrough: true,
+    suppressCarriers: ['USPS'],
+    insureUsps: true,
+    passThrough: true,
 };
