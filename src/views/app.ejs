@@ -789,7 +789,7 @@ function startEditWeight(btn) {
 async function saveWeight(btn) {
   const row = btn.closest('tr');
   const variantId = row.dataset.variantId;
-  const input = row.querySelector('.weight-input');
+  const input = row.querySelector('.weight-input')
   const grams = parseFloat(input.value);
   if (!grams || grams <= 0) { alert('Enter a valid weight in grams.'); return; }
   const res = await fetch('/api/weights/' + variantId, {
@@ -1189,15 +1189,15 @@ loadSkuBoxOverrides().then(function() {
         html += '<div class="est-rates-label">Carrier Rates</div>';
         html += '<div class="est-rates-list">';
                 // Bucket rates: cheapest Ground, cheapest 2-Day, cheapest 2 Next-Day
-        var _ground = [], _twoDay = [], _nextDay = [];
+        var _standard = [], _ground = [], _twoDay = [], _nextDay = [];
         data.rates.forEach(function(r) {
           var sc = r.serviceCode || '';
-          if (['FEDEX_GROUND','GROUND_HOME_DELIVERY','GROUND','GROUND_SAVER'].indexOf(sc) >= 0) { _ground.push(r); }
+          if (sc === 'WIDGETCO:STANDARD') { _standard.push(r); } else if (['FEDEX_GROUND','GROUND_HOME_DELIVERY','GROUND','GROUND_SAVER'].indexOf(sc) >= 0) { _ground.push(r); }
           else if (['FEDEX_2_DAY','SECOND_DAY_AIR'].indexOf(sc) >= 0) { _twoDay.push(r); }
           else if (['PRIORITY_OVERNIGHT','STANDARD_OVERNIGHT','NEXT_DAY_AIR','NEXT_DAY_AIR_SAVER','FIRST_OVERNIGHT'].indexOf(sc) >= 0) { _nextDay.push(r); }
         });
         function _cheapest(arr) { return arr.slice().sort(function(a,b){return (a.amountUsd||0)-(b.amountUsd||0);})[0]; }
-        var _shown = [];
+        var _shown = _standard.slice();
         var _g = _cheapest(_ground); if (_g) _shown.push(_g);
         var _t = _cheapest(_twoDay); if (_t) _shown.push(_t);
         _nextDay.sort(function(a,b){return (a.amountUsd||0)-(b.amountUsd||0);});
@@ -1205,7 +1205,7 @@ loadSkuBoxOverrides().then(function() {
         _shown.forEach(function(r) {
           const price = r.amountUsd != null ? '$' + r.amountUsd.toFixed(2) : '—';
           html += '<div class="est-rate-card">';
-          html += '<span class="est-rate-carrier"><img src="https://assets.easypost.com/assets/images/carrier-logos/' + r.carrier.toLowerCase() + '.png" alt="' + esc(r.carrier.toUpperCase()) + '" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'' + esc(r.carrier.toUpperCase()) + '\'"></span>';
+          html += r.carrier === 'widgetco' ? '<span class="est-rate-carrier" style="font-size:10px;font-weight:700;color:var(--text)">STANDARD</span>' : '<span class="est-rate-carrier"><img src="https://assets.easypost.com/assets/images/carrier-logos/' + r.carrier.toLowerCase() + '.png" alt="' + esc(r.carrier.toUpperCase()) + '" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'' + esc(r.carrier.toUpperCase()) + '\'"></span>';
           html += '<span class="est-rate-service">' + esc(r.serviceName || r.service || '') + '</span>';
           
             (function() {
@@ -1232,7 +1232,7 @@ loadSkuBoxOverrides().then(function() {
                 }
                 return d;
               }
-              if (r.estDeliveryDays != null) {
+              if (r.serviceCode === 'WIDGETCO:STANDARD') { html += '<span class="est-rate-days">3-5 business days</span>'; } else if (r.estDeliveryDays != null) {
                 const nowCst=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Chicago'}));const shipStart=new Date(nowCst);if(nowCst.getHours()+(nowCst.getMinutes()/60)>=16&&nowCst.getDay()!==0&&nowCst.getDay()!==6){shipStart.setDate(shipStart.getDate()+1);}const ship=nextBizDay(shipStart);
                 const arr = addBizDays(ship,({'PRIORITY_OVERNIGHT':1,'STANDARD_OVERNIGHT':1,'FEDEX_2_DAY':2,'FEDEX_GROUND':3,'GROUND_HOME_DELIVERY':3,'GROUND':3})[r.serviceCode]??r.estDeliveryDays);
                 const dn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
