@@ -459,7 +459,7 @@ const SHIP_SCHEDULE = [
             </label>
             <label class="est-label">
               <span class="est-label-text">To Country</span>
-              <input id="estCountry" type="text" placeholder="Country" value="US" maxlength="3" />
+              <input id="estCountry" type="text" placeholder="Country" value="US" maxlength="3" /></label><label class="est-label"><span class="est-label-text">Order Subtotal ($) <span style="font-weight:400;color:#9ca3af;font-size:12px">(optional — simulates checkout rules)</span></span><input id="estSubtotal" type="number" step="0.01" min="0" placeholder="e.g. 49.95" /></label>
             </label>
           </div>
         </div>
@@ -1162,7 +1162,7 @@ loadSkuBoxOverrides().then(function() {
     try {
       const data = await fetch('/api/preview', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ destination: { countryCode: cc, postalCode: zip }, fromZip: document.getElementById('estFromZip').value.trim() || undefined, isResidential: document.getElementById('estResidential').checked || undefined, lines })
+        body: JSON.stringify({ destination: { countryCode: cc, postalCode: zip }, fromZip: document.getElementById('estFromZip').value.trim() || undefined, isResidential: document.getElementById('estResidential').checked || undefined, subtotal: document.getElementById('estSubtotal') && document.getElementById('estSubtotal').value !== '' ? parseFloat(document.getElementById('estSubtotal').value) : undefined, lines })
       }).then(r => r.json());
       const s = data.shipment;
       const fromZip = document.getElementById('estFromZip').value.trim();
