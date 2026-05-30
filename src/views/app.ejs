@@ -1233,11 +1233,11 @@ loadSkuBoxOverrides().then(function() {
                 return d;
               }
               if (r.estDeliveryDays != null) {
-                const ship = nextBizDay(new Date());
-                const arr = addBizDays(ship, r.estDeliveryDays);
+                const nowCst=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Chicago'}));const shipStart=new Date(nowCst);if(nowCst.getHours()+(nowCst.getMinutes()/60)>=16&&nowCst.getDay()!==0&&nowCst.getDay()!==6){shipStart.setDate(shipStart.getDate()+1);}const ship=nextBizDay(shipStart);
+                const arr = addBizDays(ship,({'PRIORITY_OVERNIGHT':1,'STANDARD_OVERNIGHT':1,'FEDEX_2_DAY':2,'FEDEX_GROUND':3,'GROUND_HOME_DELIVERY':3,'GROUND':3})[r.serviceCode]??r.estDeliveryDays);
                 const dn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
                 const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-                const lbl = r.estDeliveryDays + ' day' + (r.estDeliveryDays !== 1 ? 's' : '') + ' (' + dn[arr.getDay()] + ' ' + mn[arr.getMonth()] + ' ' + arr.getDate() + ')';
+                const lbl = (({'PRIORITY_OVERNIGHT':1,'STANDARD_OVERNIGHT':1,'FEDEX_2_DAY':2,'FEDEX_GROUND':3,'GROUND_HOME_DELIVERY':3,'GROUND':3})[r.serviceCode]??r.estDeliveryDays) + ' day' + ((({'PRIORITY_OVERNIGHT':1,'STANDARD_OVERNIGHT':1,'FEDEX_2_DAY':2,'FEDEX_GROUND':3,'GROUND_HOME_DELIVERY':3,'GROUND':3})[r.serviceCode]??r.estDeliveryDays) !== 1 ? 's' : '') + ' (' + dn[arr.getDay()] + ' ' + mn[arr.getMonth()] + ' ' + arr.getDate() + ')';
                 html += '<span class="est-rate-days">' + lbl + '</span>';
               } else {
                 html += '<span class="est-rate-days">—</span>';
