@@ -17,7 +17,7 @@ const router = Router();
 const ALL_SERVICES = [
       { service_name: 'Standard Delivery',                    service_code: 'WIDGETCO:STANDARD',              total_price: '0', currency: 'USD', description: '3-5 business days' },
       { service_name: 'FedEx Ground',                         service_code: 'fedex:FEDEX_GROUND',             total_price: '0', currency: 'USD', description: '3-4 business days' },
-      { service_name: 'FedEx 2Day',                           service_code: 'fedex:FEDEX_2_DAY',              total_price: '0', currency: 'USD', description: '2 business days' },
+      { service_name: 'FedEx 2Day®',                           service_code: 'fedex:FEDEX_2_DAY',              total_price: '0', currency: 'USD', description: '2 business days' },
       { service_name: 'FedEx Standard Overnight',             service_code: 'fedex:STANDARD_OVERNIGHT',       total_price: '0', currency: 'USD', description: '1 business day' },
       { service_name: 'FedEx Priority Overnight',             service_code: 'fedex:PRIORITY_OVERNIGHT',       total_price: '0', currency: 'USD', description: '1 business day' },
       { service_name: 'FedEx International Ground (Canada)',  service_code: 'fedex:INTERNATIONAL_GROUND_CA',  total_price: '0', currency: 'USD', description: 'Estimated delivery varies' },
@@ -110,6 +110,15 @@ function buildDescription(serviceName: string, transitDays: number): string {
 
 
 // ---------------------------------------------------------------------------
+// displayName — maps EasyPost service names to display-friendly names
+// ---------------------------------------------------------------------------
+function displayName(name: string): string {
+  if (name === 'FedEx 2Day') return 'FedEx 2Day®';
+  return name;
+}
+
+
+// ---------------------------------------------------------------------------
 // uspsGroundTransitDays
 // ---------------------------------------------------------------------------
 function uspsGroundTransitDays(allQuotes: RateQuote[]): number {
@@ -181,7 +190,7 @@ function applyZoneRules(
                                         ? cheapest.estDeliveryDays
                                                       : 5;
                                       results.push({
-                                                      service_name: cheapest.serviceName,
+                                                      service_name: displayName(cheapest.serviceName),
                                                       service_code: cheapest.carrier + ':' + cheapest.serviceCode,
                                                       total_price: Math.round(price * 100).toString(),
                                                       currency: cheapest.currency,
@@ -194,7 +203,7 @@ function applyZoneRules(
                                                         ? q.estDeliveryDays
                                                                         : 3;
                                                       results.push({
-                                                                        service_name: q.serviceName,
+                                                                        service_name: displayName(q.serviceName),
                                                                         service_code: q.carrier + ':' + q.serviceCode,
                                                                         total_price: Math.round(price * 100).toString(),
                                                                         currency: q.currency,
@@ -225,7 +234,7 @@ function applyZoneRules(
                         ? q.estDeliveryDays
                             : 5;
                       results.push({
-                                    service_name: q.serviceName,
+                                    service_name: displayName(q.serviceName),
                                     service_code: q.carrier + ':' + q.serviceCode,
                                     total_price: Math.round(q.amountUsd * 100).toString(),
                                     currency: q.currency,
