@@ -8,7 +8,7 @@ import {
         AK_HI_TERRITORY_RULES,
         REST_OF_WORLD_RULES,
         ZoneRules,
-} from '../config/shippingRules
+} from '../config/shippingRules'
 import { RateQuote } from '../types';
 
 const router = Router();
@@ -106,6 +106,7 @@ function buildDescription(serviceName: string, transitDays: number): string {
         	const shipDate = nextShipDate();
         	const deliveryDate = addBusinessDays(shipDate, transitDays);
         	return formatDeliveryDate(deliveryDate);
+}
 
 
 // ---------------------------------------------------------------------------
