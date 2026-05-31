@@ -18,8 +18,8 @@ const ALL_SERVICES = [
       { service_name: 'Standard Delivery',                    service_code: 'WIDGETCO:STANDARD',              total_price: '0', currency: 'USD', description: '3-5 business days' },
       { service_name: 'FedEx Ground',                         service_code: 'fedex:FEDEX_GROUND',             total_price: '0', currency: 'USD', description: '3-4 business days' },
       { service_name: 'FedEx 2Day®',                           service_code: 'fedex:FEDEX_2_DAY',              total_price: '0', currency: 'USD', description: '2 business days' },
-      { service_name: 'FedEx Standard Overnight',             service_code: 'fedex:STANDARD_OVERNIGHT',       total_price: '0', currency: 'USD', description: '1 business day' },
-      { service_name: 'FedEx Priority Overnight',             service_code: 'fedex:PRIORITY_OVERNIGHT',       total_price: '0', currency: 'USD', description: '1 business day' },
+      { service_name: 'FedEx Standard Overnight®',             service_code: 'fedex:STANDARD_OVERNIGHT',       total_price: '0', currency: 'USD', description: '1 business day' },
+      { service_name: 'FedEx Priority Overnight®',             service_code: 'fedex:PRIORITY_OVERNIGHT',       total_price: '0', currency: 'USD', description: '1 business day' },
       { service_name: 'FedEx International Ground (Canada)',  service_code: 'fedex:INTERNATIONAL_GROUND_CA',  total_price: '0', currency: 'USD', description: 'Estimated delivery varies' },
       { service_name: 'FedEx International Priority Express', service_code: 'fedex:INTERNATIONAL_PRIORITY',   total_price: '0', currency: 'USD', description: 'Estimated delivery varies' },
       { service_name: 'FedEx International Economy Express',  service_code: 'fedex:INTERNATIONAL_ECONOMY',    total_price: '0', currency: 'USD', description: 'Estimated delivery varies' },
@@ -114,6 +114,8 @@ function buildDescription(serviceName: string, transitDays: number): string {
 // ---------------------------------------------------------------------------
 function displayName(name: string): string {
   if (name === 'FedEx 2Day') return 'FedEx 2Day®';
+  if (name === 'FedEx Standard Overnight') return 'FedEx Standard Overnight®';
+  if (name === 'FedEx Priority Overnight') return 'FedEx Priority Overnight®';
   return name;
 }
 
