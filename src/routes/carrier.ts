@@ -8,7 +8,7 @@ import {
         AK_HI_TERRITORY_RULES,
         REST_OF_WORLD_RULES,
         ZoneRules,
-} from '../config/shippingRules'
+} from '../config/shippingRules
 import { RateQuote } from '../types';
 
 const router = Router();
@@ -99,13 +99,14 @@ function formatDeliveryDate(utcDate: Date): string {
 // Returns "1 business day", "2 business days", or a delivery date string.
 // FedEx 2 Day → "2 business days", FedEx Overnight → "1 business day".
 // ---------------------------------------------------------------------------
-function buildDescription(transitDays: number): string {
-        if (transitDays === 1) return '1 business day';
-        if (transitDays === 2) return '2 business days';
-        const shipDate = nextShipDate();
-        const deliveryDate = addBusinessDays(shipDate, transitDays);
-        return formatDeliveryDate(deliveryDate);
-}
+function buildDescription(serviceName: string, transitDays: number): string {
+        	const n = serviceName.toLowerCase();
+        	if (n.includes('overnight')) return '1 business day';
+        	if (n.includes('2day') || n.includes('2 day')) return '2 business days';
+        	const shipDate = nextShipDate();
+        	const deliveryDate = addBusinessDays(shipDate, transitDays);
+        	return formatDeliveryDate(deliveryDate);
+
 
 // ---------------------------------------------------------------------------
 // uspsGroundTransitDays
@@ -150,7 +151,7 @@ function applyZoneRules(
                                       service_code: 'WIDGETCO:STANDARD',
                                       total_price: Math.round(tier.price * 100).toString(),
                                       currency: 'USD',
-                                      description: buildDescription(transitDays),
+                                      							description: buildDescription(tier.label, transitDays),
                         });
                         break; // Only one flat tier matches, but continue to calcTiers below
             }
@@ -183,7 +184,7 @@ function applyZoneRules(
                                                       service_code: cheapest.carrier + ':' + cheapest.serviceCode,
                                                       total_price: Math.round(price * 100).toString(),
                                                       currency: cheapest.currency,
-                                                      description: buildDescription(transitDays),
+                                                      								description: buildDescription(cheapest.serviceName, transitDays),
                                       });
                         } else {
                                       for (const q of allowed) {
@@ -196,7 +197,7 @@ function applyZoneRules(
                                                                         service_code: q.carrier + ':' + q.serviceCode,
                                                                         total_price: Math.round(price * 100).toString(),
                                                                         currency: q.currency,
-                                                                        description: buildDescription(transitDays),
+                                                                        								description: buildDescription(q.serviceName, transitDays),
                                                       });
                                       }
                         }
@@ -227,7 +228,7 @@ function applyZoneRules(
                                     service_code: q.carrier + ':' + q.serviceCode,
                                     total_price: Math.round(q.amountUsd * 100).toString(),
                                     currency: q.currency,
-                                    description: buildDescription(transitDays),
+                                    				description: buildDescription(q.serviceName, transitDays),
                       });
           }
             return results;
