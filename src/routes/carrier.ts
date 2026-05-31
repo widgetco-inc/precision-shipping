@@ -221,7 +221,7 @@ router.get('/carrier-service/rates', (_req, res) => {
     services: [
       { name: 'Standard Delivery', code: 'WIDGETCO:STANDARD' },
       { name: 'FedEx Ground', code: 'fedex:FEDEX_GROUND' },
-      { name: 'UPS Ground', code: 'ups:UPS_GROUND' },
+      { name: 'FedEx International Ground (Canada)', code: 'fedex:INTERNATIONAL_GROUND_CA' },      { name: 'FedEx International Priority Express', code: 'fedex:INTERNATIONAL_PRIORITY' },      { name: 'FedEx International Economy Express', code: 'fedex:INTERNATIONAL_ECONOMY' },      { name: 'FedEx International Connect Plus', code: 'fedex:INTERNATIONAL_CONNECT_PLUS' },      { name: 'USPS Ground Advantage', code: 'usps:GROUND_ADVANTAGE' },      { name: 'USPS International Mail', code: 'usps:INTERNATIONAL_MAIL' },
       { name: 'FedEx 2Day', code: 'fedex:FEDEX_2_DAY' },
       { name: 'FedEx Standard Overnight', code: 'fedex:STANDARD_OVERNIGHT' },
       { name: 'FedEx Priority Overnight', code: 'fedex:PRIORITY_OVERNIGHT' },
