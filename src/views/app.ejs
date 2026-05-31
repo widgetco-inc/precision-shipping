@@ -1297,7 +1297,7 @@ function savePackagingFactor() {
 }
 </script>
 <script>
-// ── Page router ──────────────────────────────────────────────────────────────
+// ── Carrier & service toggles ────────────────────────────────────────────────async function toggleCarrierSwitch(carrier, checkbox) {  const resp = await fetch('/api/settings');  const settings = await resp.json();  settings.carriers[carrier].enabled = checkbox.checked;  await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings) });}async function toggleService(checkbox) {  const carrier = checkbox.dataset.carrier;  const idx = parseInt(checkbox.dataset.svcIdx, 10);  const resp = await fetch('/api/settings');  const settings = await resp.json();  settings.carriers[carrier].services[idx].enabled = checkbox.checked;  await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings) });}// ── Page router ──────────────────────────────────────────────────────────────
 (function() {
   const PAGES = ['overview','methods','rules','preview','weights','access','orders','packages'];
   const DEFAULT = 'overview';
