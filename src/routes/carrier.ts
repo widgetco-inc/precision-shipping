@@ -8,7 +8,7 @@ import {
         AK_HI_TERRITORY_RULES,
         REST_OF_WORLD_RULES,
         ZoneRules,
-} from '../config/shippingRules';
+} from '../config/shippingRules'
 import { RateQuote } from '../types';
 
 const router = Router();
@@ -96,10 +96,12 @@ function formatDeliveryDate(utcDate: Date): string {
 
 // ---------------------------------------------------------------------------
 // buildDescription
-// Returns just the estimated delivery date string, e.g. "Tue, Jun 3"
-// No "Ships next business day" messaging.
+// Returns "1 business day", "2 business days", or a delivery date string.
+// FedEx 2 Day → "2 business days", FedEx Overnight → "1 business day".
 // ---------------------------------------------------------------------------
 function buildDescription(transitDays: number): string {
+        if (transitDays === 1) return '1 business day';
+        if (transitDays === 2) return '2 business days';
         const shipDate = nextShipDate();
         const deliveryDate = addBusinessDays(shipDate, transitDays);
         return formatDeliveryDate(deliveryDate);
