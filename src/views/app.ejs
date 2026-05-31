@@ -1579,5 +1579,5 @@ async function loadOrders() {
 
     if (location.hash === '#packages') loadPackages();
 </script>
-</body>
+<script>window.toggleCarrierSwitch=async function(c,cb){const s=await fetch('/api/settings').then(r=>r.json());s.carriers[c].enabled=cb.checked;await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(s)});};window.toggleService=async function(cb){const c=cb.dataset.carrier,i=parseInt(cb.dataset.svcIdx,10);const s=await fetch('/api/settings').then(r=>r.json());s.carriers[c].services[i].enabled=cb.checked;await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(s)});};</script></body>
 </html>
