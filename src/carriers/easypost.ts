@@ -234,6 +234,7 @@ async function fetchAllRatesForAccount(
                 shipment: Shipment,
                 fromZip?: string,
                 isResidential?: boolean,
+        isFedex?: boolean,
         ): Promise<Map<string, { rate: number; estDeliveryDays: number | null }>> {
                 // Default origin: WidgetCo Houston TX 77204
         const resolvedFromZip = fromZip ?? '77204';
@@ -266,7 +267,7 @@ async function fetchAllRatesForAccount(
                                                                                                         company: 'WidgetCo',
                                                                                                         ...(residential ? { residential: true } : {}),
                                                                 },
-                                                                parcel: shipment.eligibleForFedexEnvelope
+                                                                parcel: (shipment.eligibleForFedexEnvelope && isFedex)
                                                                 ? {
                                                                                 predefined_package: 'FedExEnvelope',
                                                                                 weight: shipment.heaviestBoxWeightLb * 16,
@@ -393,7 +394,8 @@ export class EasyPostAdapter implements CarrierAdapter {
                                         const carrierResults = await Promise.allSettled(
                                                                         enabledCarrierKeys.map(async (carrierKey) => {
                                                                                                                 const accountId = CARRIER_ACCOUNTS[carrierKey];
-                                                                                                                const rateMap = await fetchAllRatesForAccount(accountId, shipment, fromZip, isResidential);
+                                                                                                                const isFedex = carrierKey === 'fedex' || carrierKey === 'fedex_wallet';
+			const rateMap = await fetchAllRatesForAccount(accountId, shipment, fromZip, isResidential, isFedex);
                                                                                                                 ratesByCarrierKey.set(carrierKey, rateMap);
                                                                                 }),
                                                                 );
