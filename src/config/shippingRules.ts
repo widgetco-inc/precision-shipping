@@ -63,6 +63,7 @@ export const US_48_RULES: ZoneRules = {
  * Pass through all EasyPost rates; suppress USPS on orders >= $100.
  */
 export const CANADA_RULES: ZoneRules = {
+        suppressCarriers: ['international mail'],
         passThrough: true,
         suppressUspsOverSubtotal: 100,
 };
@@ -81,6 +82,7 @@ export const AK_HI_TERRITORY_RULES: ZoneRules = {
  * All carriers pass through at calculated rates.
  */
 export const REST_OF_WORLD_RULES: ZoneRules = {
+        suppressCarriers: ['international mail'],
         insureUsps: true,
         passThrough: true,
 };
