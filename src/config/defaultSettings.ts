@@ -91,8 +91,8 @@ export const defaultSettings: AppSettings = {
     },
     packaging: {
         packageWeightPct: 1.05,
-        expressEnvelopeMaxWeightLb: 0.5,
-        useFedexEnvelopeForExpress: false,
+        expressEnvelopeMaxWeightLb: 2,
+        useFedexEnvelopeForExpress: true,
     maxWeightPerBoxLb: 45,
     skuBoxOverrides: [
       // 6-U underlayment: heavy boxes, cap at 25 lb per box
