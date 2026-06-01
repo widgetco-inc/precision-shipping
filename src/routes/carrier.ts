@@ -103,6 +103,7 @@ function buildDescription(serviceName: string, transitDays: number): string {
         	const n = serviceName.toLowerCase();
         	if (n.includes('overnight')) return '1 business day';
         	if (n.includes('2day') || n.includes('2 day')) return '2 business days';
+        	if (n.includes('international mail')) return '7-21 business days';
         	const shipDate = nextShipDate();
         	const deliveryDate = addBusinessDays(shipDate, transitDays);
         	return formatDeliveryDate(deliveryDate);
