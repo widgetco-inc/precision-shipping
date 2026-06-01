@@ -44,6 +44,16 @@ export async function loadSettingsFromDb(): Promise<void> {
       if (_cachedSettings.packaging.packageWeightPct <= 0.1) {
         _cachedSettings.packaging.packageWeightPct = 1.05;
       }
+      // Sync packaging fields from defaults if they are missing or stale
+      const dp = defaultSettings.packaging;
+      if (_cachedSettings.packaging.expressEnvelopeMaxWeightLb !== dp.expressEnvelopeMaxWeightLb) {
+        _cachedSettings.packaging.expressEnvelopeMaxWeightLb = dp.expressEnvelopeMaxWeightLb;
+        console.log('[settingsStore] migrated packaging.expressEnvelopeMaxWeightLb to ' + dp.expressEnvelopeMaxWeightLb);
+      }
+      if (_cachedSettings.packaging.useFedexEnvelopeForExpress !== dp.useFedexEnvelopeForExpress) {
+        _cachedSettings.packaging.useFedexEnvelopeForExpress = dp.useFedexEnvelopeForExpress;
+        console.log('[settingsStore] migrated packaging.useFedexEnvelopeForExpress to ' + dp.useFedexEnvelopeForExpress);
+      }
       // Flush any migration changes back to DB
       await _saveToDb(_cachedSettings);
     } else {
