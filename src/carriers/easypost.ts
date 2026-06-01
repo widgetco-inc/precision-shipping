@@ -266,12 +266,17 @@ async function fetchAllRatesForAccount(
                                                                                                         company: 'WidgetCo',
                                                                                                         ...(residential ? { residential: true } : {}),
                                                                 },
-                                                                parcel: {
-                                                                                                        weight: shipment.heaviestBoxWeightLb * 16,
-                                                                                                        length: 12,
-                                                                                                        width: 9,
-                                                                                                        height: 4,
-                                                                },
+                                                                parcel: shipment.eligibleForFedexEnvelope
+                                                                ? {
+                                                                                predefined_package: 'FedExEnvelope',
+                                                                                weight: shipment.heaviestBoxWeightLb * 16,
+                                                                  }
+                                                                : {
+                                                                                weight: shipment.heaviestBoxWeightLb * 16,
+                                                                                length: 12,
+                                                                                width: 9,
+                                                                                height: 4,
+                                                                  },
                                                                 ...(!shipment.isDomestic ? {
                                                                                                         customs_info: {
                                                                                                                                                         contents_type: 'merchandise',
