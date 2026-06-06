@@ -278,12 +278,9 @@ async function fetchAllRatesForAccount(
 													company: 'WidgetCo',
 													...(residential ? { residential: true } : {}),
 								},
-								parcel: {
-													weight: shipment.heaviestBoxWeightLb * 16,
-													length: 12,
-													width: 9,
-													height: 4,
-								},
+								parcel: shipment.eligibleForFedexEnvelope
+								? { predefined_package: 'FedExEnvelope', weight: shipment.heaviestBoxWeightLb * 16 }
+								: { weight: shipment.heaviestBoxWeightLb * 16, length: 12, width: 9, height: 4 },
 								...(!shipment.isDomestic ? {
 													customs_info: {
 																			contents_type: 'merchandise',
@@ -360,6 +357,7 @@ async function fetchAllRatesForAccount(
 			console.log('[EasyPost] raw services for', accountId, JSON.stringify(rates.map((r: any) => r.service)));
 				const rateMap = new Map<string, { rate: number; estDeliveryDays: number | null }>();
 				for (const r of rates) {
+								if (r.service === 'FIRST_OVERNIGHT') continue; // suppress — $200+ FedEx envelope tier, never wanted
 								rateMap.set(r.service as string, { rate: parseFloat(r.rate), estDeliveryDays: r.est_delivery_days ?? null });
 				}
 				console.log('[EasyPost] rateMap for', accountId, JSON.stringify(Array.from(rateMap.keys())));
