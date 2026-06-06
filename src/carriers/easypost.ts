@@ -81,17 +81,6 @@ const EP_SERVICE_CODE: Record<string, Record<string, string>> = {
 		},
 };
 
-// FedEx services that support the FedEx Envelope predefined package.
-// All three express services use the envelope rate for lightweight shipments.
-const FEDEX_ENVELOPE_COMPATIBLE_SERVICES = new Set([
-		'FEDEX_2_DAY',
-		'FEDEX_2_DAY_AM',
-		'PRIORITY_OVERNIGHT',
-		'STANDARD_OVERNIGHT',
-		'FEDEX_GROUND',
-		'GROUND_HOME_DELIVERY',
-	]);
-
 function internalCarrierKey(carrierKey: string): RateQuote['carrier'] {
 		if (carrierKey === 'fedex' || carrierKey === 'fedex_wallet') return 'fedex';
 		if (carrierKey === 'ups' || carrierKey === 'ups_f' || carrierKey === 'ups_one_rate') return 'ups';
@@ -109,27 +98,37 @@ const ZIP_ORIGINS: Record<string, { street1: string; city: string; state: string
 };
 
 // ---------------------------------------------------------------------------
-// getNextShipDate
+// getNextShipDate — returns the next valid ship date as "YYYY-MM-DD".
+// Rules: Mon–Fri are ship days with a 4:00 PM CST cutoff.
+// If today is a weekday and before 4 PM CST → ship today.
+// If today is a weekday and at/after 4 PM CST → ship next business day.
+// If today is Saturday or Sunday → ship Monday.
 // ---------------------------------------------------------------------------
 function getNextShipDate(): string {
-		const nowCst = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' }));
-		const dayOfWeek = nowCst.getDay();
-		const hourFrac = nowCst.getHours() + nowCst.getMinutes() / 60;
-		const CUTOFF = 16;
+		// Get current time in CST/CDT (America/Chicago)
+	const nowCst = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' }));
+		const dayOfWeek = nowCst.getDay(); // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+	const hourFrac = nowCst.getHours() + nowCst.getMinutes() / 60;
+		const CUTOFF = 16; // 4:00 PM
 
 	const d = new Date(nowCst);
 
 	if (dayOfWeek === 0) {
-				d.setDate(d.getDate() + 1);
+				// Sunday → Monday
+			d.setDate(d.getDate() + 1);
 	} else if (dayOfWeek === 6) {
-				d.setDate(d.getDate() + 2);
+				// Saturday → Monday
+			d.setDate(d.getDate() + 2);
 	} else if (hourFrac >= CUTOFF) {
-				if (dayOfWeek === 5) {
-								d.setDate(d.getDate() + 3);
-				} else {
-								d.setDate(d.getDate() + 1);
-				}
+				// Weekday at/after cutoff → next business day
+			if (dayOfWeek === 5) {
+							// Friday after cutoff → Monday
+					d.setDate(d.getDate() + 3);
+			} else {
+							d.setDate(d.getDate() + 1);
+			}
 	}
+		// else: weekday before cutoff → ship today (d unchanged)
 
 	const yyyy = d.getFullYear();
 		const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -195,7 +194,9 @@ function usZipToState(zip: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Rate cache
+// Rate cache — keyed by (accountId, fromZip, toZip, country, weightOz, boxes, residential)
+// TTL: 90 seconds. Prevents redundant EasyPost calls when Shopify hits the
+// carrier callback multiple times during a single checkout session.
 // ---------------------------------------------------------------------------
 interface CacheEntry {
 		data: Map<string, { rate: number; estDeliveryDays: number | null }>;
@@ -209,7 +210,6 @@ function cacheKey(
 		fromZip: string,
 		shipment: Shipment,
 		isResidential: boolean,
-		useEnvelope: boolean,
 	): string {
 		return [
 					accountId,
@@ -219,7 +219,6 @@ function cacheKey(
 					(shipment.heaviestBoxWeightLb * 16).toFixed(2),
 					shipment.numberOfBoxes,
 					isResidential ? '1' : '0',
-					useEnvelope ? 'env' : 'pkg',
 				].join('|');
 }
 
@@ -237,8 +236,16 @@ function setCache(key: string, data: Map<string, { rate: number; estDeliveryDays
 		rateCache.set(key, { data, expiresAt: Date.now() + CACHE_TTL_MS });
 }
 
+// ---------------------------------------------------------------------------
+// sleep helper
+// ---------------------------------------------------------------------------
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
+// ---------------------------------------------------------------------------
+// fetchAllRatesForAccount — with retry on 429 and transient carrier errors.
+// Retries up to MAX_RETRIES times with exponential backoff starting at
+// RETRY_BASE_MS. Only retries on 429 or EasyPost "carrier failed to respond".
+// ---------------------------------------------------------------------------
 const MAX_RETRIES = 2;
 const RETRY_BASE_MS = 500;
 
@@ -247,27 +254,25 @@ async function fetchAllRatesForAccount(
 		shipment: Shipment,
 		fromZip?: string,
 		isResidential?: boolean,
-		useEnvelope?: boolean,
 	): Promise<Map<string, { rate: number; estDeliveryDays: number | null }>> {
-		// Default origin: WidgetCo Houston TX 77204
-	const resolvedFromZip = fromZip ?? '77204';
+		const resolvedFromZip = fromZip ?? '92806';
 		const residential = isResidential ?? false;
-		const envelope = useEnvelope ?? false;
 
-	const key = cacheKey(accountId, resolvedFromZip, shipment, residential, envelope);
+	// Cache lookup
+	const key = cacheKey(accountId, resolvedFromZip, shipment, residential);
 		const cached = getCached(key);
 		if (cached) {
-					console.log('[EasyPost] cache hit for', accountId, envelope ? '(envelope)' : '(package)');
+					console.log('[EasyPost] cache hit for', accountId);
 					return cached;
 		}
 
 	const shipDate = getNextShipDate();
-		console.log('[EasyPost] using ship_date:', shipDate, 'from_zip:', resolvedFromZip, envelope ? 'parcel=FedExEnvelope' : 'parcel=box');
+		console.log('[EasyPost] using ship_date:', shipDate);
 
 	const body = {
 				shipment: {
 								from_address: {
-													...(ZIP_ORIGINS[resolvedFromZip] ?? { street1: '4800 Calhoun Rd', city: 'Houston', state: 'TX' }),
+													...(ZIP_ORIGINS[resolvedFromZip] ?? { street1: '1 Main St', city: '', state: '' }),
 													zip: resolvedFromZip,
 													country: 'US',
 													company: 'WidgetCo',
@@ -281,17 +286,12 @@ async function fetchAllRatesForAccount(
 													company: 'WidgetCo',
 													...(residential ? { residential: true } : {}),
 								},
-								parcel: envelope
-									? {
-															predefined_package: 'FedExEnvelope',
-															weight: shipment.heaviestBoxWeightLb * 16,
-									}
-													: {
-																			weight: shipment.heaviestBoxWeightLb * 16,
-																			length: 12,
-																			width: 9,
-																			height: 4,
-													},
+								parcel: {
+													weight: shipment.heaviestBoxWeightLb * 16,
+													length: 12,
+													width: 9,
+													height: 4,
+								},
 								...(!shipment.isDomestic ? {
 													customs_info: {
 																			contents_type: 'merchandise',
@@ -318,8 +318,8 @@ async function fetchAllRatesForAccount(
 
 	for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
 				if (attempt > 0) {
-								const delay = RETRY_BASE_MS * Math.pow(2, attempt - 1);
-								console.warn(`[EasyPost] retry ${attempt}/${MAX_RETRIES} for ${accountId} after ${delay}ms`);
+								const delay = RETRY_BASE_MS * Math.pow(2, attempt - 1); // 500ms, 1000ms
+					console.warn(`[EasyPost] retry ${attempt}/${MAX_RETRIES} for ${accountId} after ${delay}ms`);
 								await sleep(delay);
 				}
 
@@ -334,8 +334,8 @@ async function fetchAllRatesForAccount(
 
 			if (!resp.ok) {
 							if (resp.status === 429) {
-												if (attempt < MAX_RETRIES) continue;
-												console.warn('[EasyPost] rate-limited (429) for', accountId, '— all retries exhausted, skipping carrier');
+												if (attempt < MAX_RETRIES) continue; // will retry
+								console.warn('[EasyPost] rate-limited (429) for', accountId, '— all retries exhausted, skipping carrier');
 												return new Map();
 							}
 							const errText = await resp.text();
@@ -347,7 +347,8 @@ async function fetchAllRatesForAccount(
 				const rates: any[] = data.rates ?? [];
 
 			if (rates.length === 0) {
-							const messages: any[] = data.messages ?? [];
+							// Check if this is a transient "carrier failed to respond" error — retry if so
+					const messages: any[] = data.messages ?? [];
 							const isTransient = messages.some((m: any) =>
 												typeof m.message === 'string' && m.message.toLowerCase().includes('failed to respond')
 															  			);
@@ -364,7 +365,7 @@ async function fetchAllRatesForAccount(
 							return emptyMap;
 			}
 
-			console.log('[EasyPost] raw services for', accountId, envelope ? '(envelope)' : '(package)', JSON.stringify(rates.map((r: any) => r.service)));
+			console.log('[EasyPost] raw services for', accountId, JSON.stringify(rates.map((r: any) => r.service)));
 				const rateMap = new Map<string, { rate: number; estDeliveryDays: number | null }>();
 				for (const r of rates) {
 								rateMap.set(r.service as string, { rate: parseFloat(r.rate), estDeliveryDays: r.est_delivery_days ?? null });
@@ -375,6 +376,7 @@ async function fetchAllRatesForAccount(
 				return rateMap;
 	}
 
+	// Should not reach here, but satisfy TypeScript
 	return new Map();
 }
 
@@ -387,6 +389,9 @@ export class EasyPostAdapter implements CarrierAdapter {
 					}
 					const quotes: RateQuote[] = [];
 
+			// Determine which carrier keys are enabled
+			// Pre-filter: skip accounts that are disabled OR have no services
+			// eligible for this destination — avoids unnecessary EasyPost API calls.
 			const enabledCarrierKeys = Object.entries(settings.carriers)
 						.filter(([key, cfg]) => {
 											if (!cfg.enabled || !(key in CARRIER_ACCOUNTS)) return false;
@@ -404,40 +409,13 @@ export class EasyPostAdapter implements CarrierAdapter {
 						})
 						.map(([key]) => key);
 
-			// For each carrier key, fetch rate maps.
-			// FedEx is special: when the shipment is envelope-eligible, we make TWO calls —
-			// one with FedExEnvelope (for Priority Overnight, 2Day, etc.) and one with a
-			// regular box package (for Standard Overnight, which does NOT support envelopes).
-			// We then build a merged map: envelope rates take priority for envelope-compatible
-			// services, package rates fill in the rest (especially STANDARD_OVERNIGHT).
+			// Fetch all rates in parallel — ONE API call per carrier account
 			const ratesByCarrierKey = new Map<string, Map<string, { rate: number; estDeliveryDays: number | null }>>();
 					const carrierResults = await Promise.allSettled(
 									enabledCarrierKeys.map(async (carrierKey) => {
 														const accountId = CARRIER_ACCOUNTS[carrierKey];
-														const isFedex = carrierKey === 'fedex' || carrierKey === 'fedex_wallet';
-														const useEnvelope = isFedex && shipment.eligibleForFedexEnvelope;
-
-														   				if (useEnvelope) {
-																								// Fetch both envelope and regular-package rates in parallel for FedEx
-															const [envelopeMap, packageMap] = await Promise.all([
-																						fetchAllRatesForAccount(accountId, shipment, fromZip, isResidential, true),
-																						fetchAllRatesForAccount(accountId, shipment, fromZip, isResidential, false),
-																					]);
-																								// Merge: start with package rates as the base, then overlay envelope rates
-															// for envelope-compatible services (envelope rates are cheaper/more accurate
-															// for lightweight shipments).
-															const merged = new Map(packageMap);
-																								for (const [svc, rateInfo] of envelopeMap) {
-																															if (FEDEX_ENVELOPE_COMPATIBLE_SERVICES.has(svc)) {
-																																							merged.set(svc, rateInfo);
-																															}
-																								}
-																								console.log('[EasyPost] FedEx merged rate map keys:', JSON.stringify(Array.from(merged.keys())));
-																								ratesByCarrierKey.set(carrierKey, merged);
-																		} else {
-																								const rateMap = await fetchAllRatesForAccount(accountId, shipment, fromZip, isResidential, false);
-																								ratesByCarrierKey.set(carrierKey, rateMap);
-																		}
+														const rateMap = await fetchAllRatesForAccount(accountId, shipment, fromZip, isResidential);
+														ratesByCarrierKey.set(carrierKey, rateMap);
 									}),
 								);
 					carrierResults.forEach((r, i) => {
@@ -446,6 +424,7 @@ export class EasyPostAdapter implements CarrierAdapter {
 									}
 					});
 
+			// Match our service definitions to the fetched rates
 			for (const [carrierKey, carrierSettings] of Object.entries(settings.carriers)) {
 							if (!carrierSettings.enabled) continue;
 							if (!(carrierKey in CARRIER_ACCOUNTS)) continue;
