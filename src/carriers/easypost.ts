@@ -2,6 +2,7 @@ import { CarrierAdapter } from './base';
 import { RateQuote, Shipment } from '../types';
 import { getSettings } from '../services/settingsStore';
 import { env } from '../lib/env';
+import { ORIGIN_ZIP } from '../config/constants';
 
 // EasyPost carrier account IDs mapped to our carrier setting keys
 const CARRIER_ACCOUNTS: Record<string, string> = {
@@ -246,7 +247,7 @@ async function fetchAllRatesForAccount(
 		fromZip?: string,
 		isResidential?: boolean,
 	): Promise<Map<string, { rate: number; estDeliveryDays: number | null }>> {
-		const resolvedFromZip = fromZip ?? '77204'; // WidgetCo Houston origin
+		const resolvedFromZip = fromZip ?? ORIGIN_ZIP;
 		const residential = isResidential ?? false;
 
 	// Cache lookup
