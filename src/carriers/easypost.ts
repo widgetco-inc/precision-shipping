@@ -5,17 +5,8 @@ import { env } from '../lib/env';
 
 // EasyPost carrier account IDs mapped to our carrier setting keys
 const CARRIER_ACCOUNTS: Record<string, string> = {
-		// Personal carrier accounts
 		fedex: 'ca_544bae948c20483c947448953a736823',
-		ups: 'ca_5065a768022845f89a3e646a6eafa19b',
-		ups_f: 'ca_61b89a3dcdaa4c8b8acd96e595c2de91',
-		ups_one_rate: 'ca_024451c3996d417fa0ecf521bbd0f82',
 		usps: 'ca_2046b502461e4ad68b6cf6c0f0f9843b',
-		// EasyPost Wallet carriers
-		dhl_ecomm: 'ca_0835e9c34bac49d1a0a419bfc3a6074b',
-		dhl_express: 'ca_74860ca138bf4590a299e3a9d2dd2159',
-		fedex_wallet: 'ca_36962392a6704d2389b0d2a96f843585',
-		asendia: 'ca_d998402343be4f8abcdaf281e678b9d2',
 };
 
 // Maps our internal service codes to the EasyPost service code returned in rate responses.
