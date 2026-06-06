@@ -296,7 +296,7 @@ const SHIP_SCHEDULE = [
               <%- parts.length ? parts.join(' & ') : 'All orders' %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line); font-weight:600;">
-              <%- tier.carriers.join(' or ') %> <span style="font-weight:400; color:var(--muted);">(cheapest wins)</span>
+                            <%- tier.carriers.join(' or ') %><% if (tier.cheapestOnly) { %> <span style="font-weight:400; color:var(--muted);">(cheapest wins)</span><% } %>
             </td>
             <td style="padding:10px 16px; border-bottom:1px solid var(--line);">
               <% if (tier.overridePrice === 0) { %><span style="color:#16a34a; font-weight:700;">Free</span><% } else if (tier.overridePrice !== undefined) { %>$<%= tier.overridePrice.toFixed(2) %><% } else { %>Calculated<% } %>
