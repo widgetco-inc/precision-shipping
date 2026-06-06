@@ -10,6 +10,7 @@ import {
         ZoneRules,
 } from '../config/shippingRules'
 import { RateQuote } from '../types';
+import { ORIGIN_ZIP } from '../config/constants';
 
 const router = Router();
 
@@ -305,7 +306,7 @@ router.post('/carrier-service/rates', async (req, res) => {
 
           const shipment = await buildShipment(lines, destination);
                   const adapters = [new EasyPostAdapter()];
-                  const rawResults = await Promise.all(adapters.map((a) => a.getRates(shipment, '77204'))  // WidgetCo Houston origin zip);
+                  const rawResults = await Promise.all(adapters.map((a) => a.getRates(shipment, ORIGIN_ZIP)));
 
           const allQuotes = rawResults.flat()
                     .filter(q => q.amountUsd != null && !isNaN(q.amountUsd))
