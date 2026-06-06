@@ -82,11 +82,12 @@ const EP_SERVICE_CODE: Record<string, Record<string, string>> = {
 };
 
 // FedEx services that support the FedEx Envelope predefined package.
-// STANDARD_OVERNIGHT requires a regular package — it is NOT envelope-compatible.
+// All three express services use the envelope rate for lightweight shipments.
 const FEDEX_ENVELOPE_COMPATIBLE_SERVICES = new Set([
 		'FEDEX_2_DAY',
 		'FEDEX_2_DAY_AM',
 		'PRIORITY_OVERNIGHT',
+		'STANDARD_OVERNIGHT',
 		'FEDEX_GROUND',
 		'GROUND_HOME_DELIVERY',
 	]);
