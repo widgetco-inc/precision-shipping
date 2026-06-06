@@ -305,7 +305,7 @@ router.post('/carrier-service/rates', async (req, res) => {
 
           const shipment = await buildShipment(lines, destination);
                   const adapters = [new EasyPostAdapter()];
-                  const rawResults = await Promise.all(adapters.map((a) => a.getRates(shipment)));
+                  const rawResults = await Promise.all(adapters.map((a) => a.getRates(shipment, '77204'))  // WidgetCo Houston origin zip);
 
           const allQuotes = rawResults.flat()
                     .filter(q => q.amountUsd != null && !isNaN(q.amountUsd))
