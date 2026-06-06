@@ -97,8 +97,8 @@ export const defaultSettings: AppSettings = {
     skuBoxOverrides: [
       // 6-U underlayment: heavy boxes, cap at 25 lb per box
       { skuPrefix: '6-U', maxWeightPerBoxLb: 25 },
-      // 6-W and 6-ROLL: each unit ships in its own individual box
-      { skuPrefix: '6-W', shipsIndividually: true },
+      // 6-U and 6-ROLL: each unit ships in its own individual box
+      { skuPrefix: '6-U', shipsIndividually: true },
       { skuPrefix: '6-ROLL', shipsIndividually: true },
     ],
     },
