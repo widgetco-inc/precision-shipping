@@ -1,0 +1,88 @@
+# origin-zip-guard.yml
+#
+# Guards against a recurring bug where the EasyPost origin zip gets silently
+# changed from 77204 (Houston) to a placeholder (e.g. 90210, 92806), causing
+# FedEx overnight rates to be calculated from the wrong origin city.
+#
+# This workflow runs on every push and pull request to main and:
+#   1. Verifies ORIGIN_ZIP is '77204' in constants.ts
+#   2. Verifies easypost.ts and carrier.ts import ORIGIN_ZIP (not hardcode it)
+#   3. Verifies no other file hardcodes '92806' or '90210' as a fromZip default
+
+name: Origin ZIP Guard
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  origin-zip-guard:
+    name: Verify origin ZIP is Houston 77204
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check ORIGIN_ZIP constant is 77204
+        run: |
+          echo "Checking ORIGIN_ZIP value in constants.ts..."
+          grep -n "ORIGIN_ZIP" src/config/constants.ts
+          if ! grep -q "ORIGIN_ZIP = '77204'" src/config/constants.ts; then
+            echo "FAIL: ORIGIN_ZIP is not set to '77204' in src/config/constants.ts"
+            echo "This will cause FedEx overnight rates to be calculated from the wrong city."
+            exit 1
+          fi
+          echo "PASS: ORIGIN_ZIP = '77204'"
+
+      - name: Check easypost.ts uses ORIGIN_ZIP constant (not hardcoded string)
+        run: |
+          echo "Checking easypost.ts imports ORIGIN_ZIP..."
+          if ! grep -q "import.*ORIGIN_ZIP.*from.*constants" src/carriers/easypost.ts; then
+            echo "FAIL: easypost.ts does not import ORIGIN_ZIP from constants.ts"
+            echo "The fromZip default fallback must use the ORIGIN_ZIP constant."
+            exit 1
+          fi
+          echo "Checking easypost.ts does not hardcode a zip in the fallback..."
+          if grep -q "fromZip ?? '[0-9]" src/carriers/easypost.ts; then
+            echo "FAIL: easypost.ts has a hardcoded zip string in the fromZip fallback."
+            echo "Use ORIGIN_ZIP from constants.ts instead."
+            grep -n "fromZip ??" src/carriers/easypost.ts
+            exit 1
+          fi
+          echo "PASS: easypost.ts uses ORIGIN_ZIP constant"
+
+      - name: Check carrier.ts uses ORIGIN_ZIP constant (not hardcoded string)
+        run: |
+          echo "Checking carrier.ts imports ORIGIN_ZIP..."
+          if ! grep -q "import.*ORIGIN_ZIP.*from.*constants" src/routes/carrier.ts; then
+            echo "FAIL: carrier.ts does not import ORIGIN_ZIP from constants.ts"
+            exit 1
+          fi
+          echo "Checking carrier.ts passes ORIGIN_ZIP to getRates (not a hardcoded zip)..."
+          if grep -qE "getRates\(shipment,\s*'[0-9]{5}'" src/routes/carrier.ts; then
+            echo "FAIL: carrier.ts passes a hardcoded zip string to getRates."
+            echo "Use ORIGIN_ZIP from constants.ts instead."
+            grep -n "getRates" src/routes/carrier.ts
+            exit 1
+          fi
+          echo "PASS: carrier.ts uses ORIGIN_ZIP constant"
+
+      - name: Check no stray placeholder zips used as origin
+        run: |
+          echo "Scanning for known bad placeholder zips used as origin..."
+          BAD_ZIPS=("92806" "90210" "10001" "77001")
+          FOUND=0
+          for zip in "${BAD_ZIPS[@]}"; do
+            # Only flag if it appears in a fromZip default context, not in ZIP_ORIGINS map
+            if grep -rn "fromZip ?? '$zip'" src/; then
+              echo "FAIL: Placeholder zip $zip found as fromZip default"
+              FOUND=1
+            fi
+          done
+          if [ $FOUND -eq 1 ]; then
+            exit 1
+          fi
+          echo "PASS: No placeholder zips used as fromZip default"
