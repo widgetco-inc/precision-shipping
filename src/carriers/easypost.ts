@@ -246,7 +246,7 @@ async function fetchAllRatesForAccount(
 		fromZip?: string,
 		isResidential?: boolean,
 	): Promise<Map<string, { rate: number; estDeliveryDays: number | null }>> {
-		const resolvedFromZip = fromZip ?? '92806';
+		const resolvedFromZip = fromZip ?? '77204'; // WidgetCo Houston origin
 		const residential = isResidential ?? false;
 
 	// Cache lookup
