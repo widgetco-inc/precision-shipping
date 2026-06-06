@@ -1,4 +1,4 @@
-—																						—																																										—																																							—																																																																																																																																																																		import { Pool } from 'pg';
+import { Pool } from 'pg';
 import { defaultSettings } from '../config/defaultSettings';
 import { AppSettings } from '../types';
 
