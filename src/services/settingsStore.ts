@@ -40,6 +40,11 @@ export async function loadSettingsFromDb(): Promise<void> {
     if (res.rows.length > 0) {
       const fromDb = res.rows[0].value as AppSettings;
       _cachedSettings = migrateMissingServices(fromDb);
+              // Migrate legacy weightFactor -> packageWeightPct (key rename)
+              if ((_cachedSettings.packaging as any).weightFactor != null && _cachedSettings.packaging.packageWeightPct == null) {
+                          _cachedSettings.packaging.packageWeightPct = (_cachedSettings.packaging as any).weightFactor;
+                          console.log('[settingsStore] migrated packaging.weightFactor -> packageWeightPct:', _cachedSettings.packaging.packageWeightPct);
+              }
       // One-time fix: correct legacy packageWeightPct of 0.1 (wrong default) to 1.05 (+5% tare)
       if (_cachedSettings.packaging.packageWeightPct <= 0.1) {
         _cachedSettings.packaging.packageWeightPct = 1.05;
