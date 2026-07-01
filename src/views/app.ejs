@@ -97,22 +97,13 @@
 <script>
 // ── Shipping Schedule & Holiday Data (single source of truth) ───────────────
 const BIZ_HOLIDAYS = [
-  // 2026 — FedEx/UPS observed holidays
-  { date: '1/1',   label: "New Year's Day" },
-  { date: '1/19',  label: 'MLK Jr. Day' },
-  { date: '5/25',  label: 'Memorial Day' },
-  { date: '7/4',   label: 'Independence Day' },
-  { date: '8/31',  label: 'Labor Day' },
-  { date: '11/26', label: 'Thanksgiving' },
-  { date: '12/25', label: 'Christmas' },
-  // 2027 — FedEx/UPS observed holidays
-  { date: '1/1',   label: "New Year's Day" },
-  { date: '1/18',  label: 'MLK Jr. Day' },
-  { date: '5/31',  label: 'Memorial Day' },
-  { date: '7/5',   label: 'Independence Day (observed)' },
-  { date: '9/6',   label: 'Labor Day' },
-  { date: '11/25', label: 'Thanksgiving' },
-  { date: '12/24', label: 'Christmas (observed)' },
+  <%- (settings.closureDates || []).filter(function(d){ return !d.date.startsWith('DOW:'); }).map(function(d) {
+    var parts = d.date.split('-');
+    var y = parseInt(parts[0], 10);
+    var m = parseInt(parts[1], 10);
+    var day = parseInt(parts[2], 10);
+    return '{ date: \'' + m + '/' + day + '\', label: ' + JSON.stringify(d.label) + ', year: ' + y + ' }';
+  }).join(',\n  ') %>
 ];
 const SHIP_SCHEDULE = [
   { day: 'Monday',    ships: true,  cutoff: '4:00 PM CST' },
@@ -393,15 +384,29 @@ const SHIP_SCHEDULE = [
     }
 
     // ── Toggle a shipping day on/off ──────────────────────────────────────
-    window.toggleShipDay = function(i) {
-      SHIP_SCHEDULE[i].ships = !SHIP_SCHEDULE[i].ships;
-      // Re-render the row
+    window.toggleShipDay = async function(i) {
+      var track = document.getElementById('sw-track-' + i);
+      if (track) { track.style.opacity = '0.5'; track.style.pointerEvents = 'none'; }
+      var wasOpen = SHIP_SCHEDULE[i].ships;
+      SHIP_SCHEDULE[i].ships = !wasOpen;
       var sbody = document.getElementById('schedule-tbody');
       if (sbody) renderScheduleRow(i, SHIP_SCHEDULE[i], sbody);
-      // Sync the estimator's bizHolidays reference (no page reload needed)
-      // The estimator re-computes bizHolidays fresh on each "Get Rates" click,
-      // so no action needed here — SHIP_SCHEDULE is already updated in memory.
-    };
+      try {
+        var r = await fetch('/api/settings/closure-dates', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date: 'DOW:' + SHIP_SCHEDULE[i].day, label: SHIP_SCHEDULE[i].day + ' (closed)', closed: !SHIP_SCHEDULE[i].ships })
+        });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+      } catch (e) {
+        console.error('[schedule] save failed', e);
+        SHIP_SCHEDULE[i].ships = wasOpen; // revert
+        if (sbody) renderScheduleRow(i, SHIP_SCHEDULE[i], sbody);
+        alert('Failed to save schedule change. Please try again.');
+      } finally {
+        if (track) { track.style.opacity = ''; track.style.pointerEvents = ''; }
+      }
+    }
 
     // ── Build schedule table on load ─────────────────────────────────────
     (function() {
@@ -415,13 +420,12 @@ const SHIP_SCHEDULE = [
       // ── Build holidays table ──────────────────────────────────────────
       var hbody = document.getElementById('holidays-tbody');
       if (hbody) {
-        var yearLabels = [2026,2026,2026,2026,2026,2026,2026,2027,2027,2027,2027,2027,2027,2027];
-        BIZ_HOLIDAYS.forEach(function(h, i) {
-          var year = yearLabels[i] || '';
+        BIZ_HOLIDAYS.forEach(function(h) {
+          var year = h.year || '';
           var parts = h.date.split('/');
           var month = parseInt(parts[0], 10);
           var day = parseInt(parts[1], 10);
-          var dateObj = new Date(year, month - 1, day);
+          var dateObj = new Date(year || new Date().getFullYear(), month - 1, day);
           var formatted = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
           var tr = document.createElement('tr');
           tr.innerHTML =
