@@ -197,6 +197,21 @@ interface CacheEntry {
 const rateCache = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 90_000;
 
+// ---------------------------------------------------------------------------
+// EasyPost call counter (lightweight, in-memory usage monitor).
+// Increments once per actual HTTP call made to EasyPost's rate API, including
+// retries -- each retried call is billed by EasyPost as its own "RatingEvent".
+// Logged with a distinct [CALL-COUNT] tag so it can be grepped in Railway
+// logs to watch usage in near real time. Resets on process restart/redeploy;
+// intended for short-term monitoring, not a permanent record (cross-check
+// against the EasyPost invoice for the source of truth).
+// ---------------------------------------------------------------------------
+let easypostCallCount = 0;
+function logEasyPostCall(accountId: string, attempt: number): void {
+	    easypostCallCount += 1;
+	    console.log(`[EasyPost][CALL-COUNT] total=${easypostCallCount} account=${accountId} attempt=${attempt}`);
+}
+
 function cacheKey(
 		accountId: string,
 		fromZip: string,
@@ -312,6 +327,7 @@ async function fetchAllRatesForAccount(
 								await sleep(delay);
 				}
 
+			logEasyPostCall(accountId, attempt);
 			const resp = await fetch('https://api.easypost.com/v2/shipments', {
 							method: 'POST',
 							headers: {
